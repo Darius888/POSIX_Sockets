@@ -13,10 +13,10 @@ all: CFLAGS=$(CCGLAGS)
 all: $(BIN_FILES)
 .PHONY : all
 
-editor: editor.o lines.o
+editor: editor.o lines.o 
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-broker: broker.o lines.o
+broker: broker.o lines.o 
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 %.o: %.c

@@ -2,11 +2,17 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h> // for open
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netdb.h>
+#include "lines.h"
+
+#define MAX_LINE 256
+#define MAX_LINE_TEXTO 1024
 
 void print_usage() {
 	    printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
@@ -17,12 +23,14 @@ int main(int argc, char *argv[]) {
 	char host[256]= "";
 	char puerto[256]= "";
 	char tema[256]= "";
-	char texto[1024]= "";
+	char texto[256]= "";
+	char buffer[MAX_LINE];
 
 	struct sockaddr_in client_addr, server_addr;
 	struct hostent *hp;
 	int sd, sc;
-	int size, val;
+
+	int tm, tx, t;
 
 
 	
@@ -61,28 +69,38 @@ int main(int argc, char *argv[]) {
 	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	bzero((char *)&server_addr, sizeof(server_addr));
-	hp = host;
+	hp = gethostbyname(argv[2]);
 
 	memcpy(&(server_addr.sin_addr), hp->h_addr, hp->h_length);
 	server_addr.sin_family	= AF_INET;
-	server_addr.sin_port	= htons(puerto);
+	server_addr.sin_port	= htons(4200);
 
 	//establish connection
-	connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr));
+	if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
+	{
+		perror("Connet failed");
+	} else
+	{
+		printf("Connection works !\n");
+	}
 
-
-	//send request
-	send(sd, (char *) tema, sizeof(char), 0);
-	send(sd, (char *) texto, sizeof(char), 0);
-
-	//receive response
-	//recv(sd, &res, sizeof(int), 0);
-
-	//printf("Result = %d\n", res);
-
+	while(1)
+	{
+		tm = readLine(0, buffer, MAX_LINE);
+	
+		if(tm==-1)
+		{
+			perror("Fail");
+		} else
+		{
+			send(sd, (char *) buffer, tm+1, 0);
+			readLine(sd, buffer, tm+1);
+			printf("Message sent !\n");
+		}
+	}
 	close(sd);
 
-
-	return 0;
+	exit(0);
+	//return 0;
 }
 	
