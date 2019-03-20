@@ -71,14 +71,14 @@ int main(int argc, char *argv[]) {
 	bzero((char *)&server_addr, sizeof(server_addr));
 	hp = gethostbyname(argv[2]);
 
-	memcpy(&(server_addr.sin_addr), hp->h_addr, hp->h_length);
+	memcpy(&(server_addr.sin_addr), hp->h_addr_list[0], hp->h_length);
 	server_addr.sin_family	= AF_INET;
-	server_addr.sin_port	= htons(4200);
+	server_addr.sin_port	= htons(atoi(puerto));
 
 	//establish connection
 	if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
 	{
-		perror("Connet failed");
+		printf("Error in the connection to the server %s : %s\n", host, puerto);
 	} else
 	{
 		printf("Connection works !\n");

@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netdb.h>
@@ -67,7 +69,7 @@ int main(int argc, char *argv[]) {
 	bzero((char *)&server_addr, sizeof(server_addr));
 	server_addr.sin_family      = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
-	server_addr.sin_port 		= htons(4200);
+	server_addr.sin_port 		= htons(atoi(puerto));
 
 	bind(sd, &server_addr, sizeof(server_addr));
 
