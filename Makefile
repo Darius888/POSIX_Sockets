@@ -1,4 +1,4 @@
-BIN_FILES  = editor broker
+BIN_FILES  = editor broker suscriptor
 
 CC = gcc
 
@@ -19,11 +19,15 @@ editor: editor.o lines.o
 broker: broker.o lines.o 
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
+suscriptor:
+	javac suscriptor.java
+
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
 
 clean:
 	rm -f $(BIN_FILES) *.o
+	rm -f suscriptor.class
 
 .SUFFIXES:
 .PHONY : clean

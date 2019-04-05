@@ -1,5 +1,8 @@
 import java.io.*;
 import gnu.getopt.Getopt;
+import java.lang.*;
+import java.net.*;
+import java.util.*;
 
 
 class suscriptor {
@@ -11,23 +14,69 @@ class suscriptor {
 	
 	private static String _server   = null;
 	private static short _port = -1;
+	public static ObjectOutputStream out;
+	public static DataInputStream in;
 		
 	
 	/********************* METHODS ********************/
 	
 	static int subscribe(String topic) 
-	{
-		// Write your code here
-			
-		System.out.println("Subscribe to: " + topic);
+	{	
+		String subPort = "4000\0";
+		try{
+			out.writeObject(subPort);
+			out.writeObject(topic);
+			out.flush();
+		}
+		catch(Exception e){
+			System.out.println("Error in the connection to the broker < server >: < port >");
+		}
+		byte response = -1;
+		try{
+			response = in.readByte();
+		}
+		catch(Exception e){
+			System.out.println("Error in the connection to the broker < server >: < port >");
+		}
+		if(response == 0){
+			System.out.println("c> SUBCRIBE OK");
+			System.out.println("Subscribe to: " + topic);
+			String resTopic = null;
+			String resText = null;
+			System.out.println("c > MESSAGE FROM "+resTopic+" : "+resText);
+		}else if(response == 1){
+			System.out.println("c> SUBCRIBE FAIL");
+		}
         
 		return 0;
 	}
 
 	static int unsubscribe(String topic) 
 	{
-		// Write your code here
-		System.out.println("Unsubscribe from: " + topic);
+		String subPort = "4000\0";
+		try{
+			out.writeObject(subPort);
+			out.writeObject(topic);
+			out.flush();
+		}
+		catch(Exception e){
+			System.out.println("Error in the connection to the broker < server >: < port >");
+		}
+		byte response = -1;
+		try{
+			response = in.readByte();
+		}
+		catch(Exception e){
+			System.out.println("Error in the connection to the broker < server >: < port >");
+		}
+		if(response == 1){
+			System.out.println("c> TOPIC NOT SUBSCRIBED");
+		}else if(response == 0){
+			System.out.println("c> UNSUBCRIBE OK");
+			System.out.println("Unsubscribe from: " + topic);
+		}else if(response == 2){
+			System.out.println("c> UNSUBCRIBE FAIL");
+		}
         
 		return 0;
 	}
@@ -150,10 +199,22 @@ class suscriptor {
 			return;
 		}
 		
+		try{
+			String host = argv[1];
+			int port = Integer.parseInt(argv[3]);
+			Socket sc = new Socket(host, port);
 
-		// Write code here
-		
-		shell();
-		System.out.println("+++ FINISHED +++");
+			out = new ObjectOutputStream(sc.getOutputStream());
+			in = new DataInputStream(sc.getInputStream());
+			
+			shell();
+			
+			in.close();
+			out.close();
+			sc.close();
+		} catch(Exception e){
+			System.out.println("Error in the connection to the broker <server>:<port>");
+		}
+		System.out.println("+++ FINISHED +++");	
 	}
 }
