@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
 	char tema[256] = "";
 	char texto[256] = "";
 	char buffer[MAX_LINE];
+	char command[MAX_LINE];
 
 	struct sockaddr_in client_addr, server_addr;
 	int sd, sc;
@@ -34,9 +35,9 @@ int main(int argc, char *argv[]) {
 	pthread_attr_t attr;
     pthread_t thid[NUM_THREADS];
     int arrayId[NUM_THREADS];
-	int tm, tx;
+	int topic, text,operation;
 	int tw;
-
+	int op_code, op_response;
 
 	
 
@@ -86,20 +87,67 @@ int main(int argc, char *argv[]) {
 
 	while(1)
 	{		
-		tm = readLine(sc, buffer, MAX_LINE);
 
-		//USE READLINE FROM PREVIOUS SESSION
-		// printf("%s\n", tema);
-		// printf("%s\n", texto);
-		printf("%s\n", buffer );
-		send(sc, (char *) buffer, tm+1, 0);
-		send(sc,(char *) &tm, sizeof(int) ,0);
+		// operation = readLine(sc, command, MAX_LINE);
+
+		// printf("OPERATION RECEIVED IS : \n");
+		// printf("%s\n", command);
+
+
+		
+		// 	Receive command, and check if it is correct, if yes, send the response to the editor.
+		
+
+
+		// if (strcmp(command,"PUBLISH"))
+		// {
+			// op_code = 1;
+			// send(sd, (char *) op_code, sizeof(int), 0);
+
+			topic = readLine(sc, tema, MAX_LINE);
+			text = readLine(sc, texto, MAX_LINE);
+
+			printf("TOPIC RECEIVED\n");
+		printf("%s\n", tema );
+		printf("TEXT RECEIVED\n");
+		printf("%s\n", texto );
+
+		send(sc, (char *) tema, topic+1, 0);
+		send(sc,(char *) &topic, sizeof(int) ,0);
+		send(sc, (char *) texto, text+1, 0);
+		send(sc,(char *) &text, sizeof(int) ,0);
+		
+
+			
+		// } else if(strcmp(command, "SUBSCRIBE"))
+		// {
+		// 	op_code = 2;
+		// } else if(strcmp(command, "UNSUBSCRIBE"))
+		// {
+		// 	op_code = 3;
+		// }
+
+		// switch(op_code)
+		// {
+		// 	case 1: printf("OPERATION IS PUBLISH\n");
+			
+		// 	case 2: printf("OPERATION IS SUBSCRIBE\n");
+			
+		// 	case 3: printf("OPERATION IS UNSUBSCRIBE\n");
+			 
+		// 	default: printf("WRONG COMMAND\n");
+		// }
+		// if (op_code == 1)
+		// {
+				
+		// }
 	
 		
 	}
-	close(sc);
+		close(sc);
 	close(sd);
 	exit(0);
+	}
 	//return 0;
-}
+	
 	
