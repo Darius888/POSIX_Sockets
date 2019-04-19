@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
 	char tema[256] = "";
 	char texto[256] = "";
 	char buffer[MAX_LINE];
+	char op_buff[256];
+	char resp_buff[256];
 	char command[MAX_LINE];
 
 	struct sockaddr_in client_addr, server_addr;
@@ -35,9 +37,10 @@ int main(int argc, char *argv[]) {
 	pthread_attr_t attr;
     pthread_t thid[NUM_THREADS];
     int arrayId[NUM_THREADS];
-	int topic, text,operation;
-	int tw;
-	int op_code, op_response;
+	int topic, text, operation;
+	int tw,r;
+	int op_code, op_response, response;
+	char * temp;
 
 	
 
@@ -58,7 +61,6 @@ int main(int argc, char *argv[]) {
 
 
 	printf("Puerto: %s\n", puerto);
-
 
 
 	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -88,60 +90,69 @@ int main(int argc, char *argv[]) {
 	while(1)
 	{		
 
-		// operation = readLine(sc, command, MAX_LINE);
-
-		// printf("OPERATION RECEIVED IS : \n");
-		// printf("%s\n", command);
-
-
-		
-		// 	Receive command, and check if it is correct, if yes, send the response to the editor.
-		
+		operation = readLine(sc, op_buff, MAX_LINE);
+		send(sc, (char *) op_buff, operation+1, 0);
+		send(sc, (char *) &operation, sizeof(int), 0);
+		//printf("%s\n", op_buff );
 
 
-		// if (strcmp(command,"PUBLISH"))
-		// {
-			// op_code = 1;
-			// send(sd, (char *) op_code, sizeof(int), 0);
-
-			topic = readLine(sc, tema, MAX_LINE);
-			text = readLine(sc, texto, MAX_LINE);
-
-			printf("TOPIC RECEIVED\n");
-		printf("%s\n", tema );
-		printf("TEXT RECEIVED\n");
-		printf("%s\n", texto );
-
-		send(sc, (char *) tema, topic+1, 0);
-		send(sc,(char *) &topic, sizeof(int) ,0);
-		send(sc, (char *) texto, text+1, 0);
-		send(sc,(char *) &text, sizeof(int) ,0);
-		
-
+		if(strcmp(op_buff,"PUBLISH")==0)
+		{
+			printf("OPERATION CODE RECEIVED\n");
+			printf("%s\n", op_buff);
+			printf("OPERATION CODE APPLIED\n");
+			op_code = 1;
+			response = 15;
+			send(sc, &response, sizeof(int), 0); /*PROBLEM HERE*/
+			//send(sc, (char *)response, 2*sizeof(int), 0);
 			
-		// } else if(strcmp(command, "SUBSCRIBE"))
+		} //else if()
 		// {
-		// 	op_code = 2;
-		// } else if(strcmp(command, "UNSUBSCRIBE"))
+
+		// } else if()
 		// {
-		// 	op_code = 3;
+			
 		// }
+		 else
+		{
+			printf("WASSUP\n");
+		}
 
-		// switch(op_code)
-		// {
-		// 	case 1: printf("OPERATION IS PUBLISH\n");
-			
-		// 	case 2: printf("OPERATION IS SUBSCRIBE\n");
-			
-		// 	case 3: printf("OPERATION IS UNSUBSCRIBE\n");
-			 
-		// 	default: printf("WRONG COMMAND\n");
-		// }
-		// if (op_code == 1)
-		// {
+		switch(op_code) {
+			case 1:
 				
-		// }
+				
+					
+				topic = readLine(sc, tema, MAX_LINE);
+				text = readLine(sc, texto, MAX_LINE);
+
+				printf("TOPIC RECEIVED\n");
+				printf("%s\n", tema );
+				printf("TEXT RECEIVED\n");
+				printf("%s\n", texto );
+
+				send(sc, (char *) tema, topic+1, 0);
+				send(sc,(char *) &topic, sizeof(int) ,0);
+				send(sc, (char *) texto, text+1, 0);
+				send(sc,(char *) &text, sizeof(int) ,0);
+				
 	
+				break;
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+
+			default: 
+				printf("WRONG OPERATION CODE\n");
+
+
+		}
+
+				
+
+		
+		
 		
 	}
 		close(sc);

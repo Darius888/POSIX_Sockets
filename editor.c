@@ -25,13 +25,15 @@ int main(int argc, char *argv[]) {
 	char tema[256]= "";
 	char texto[256]= "";
 	char buffer[MAX_LINE];
+	char op_buff[256];
+	char resp_buff[256];
 	char command[MAX_LINE];
 
 	struct sockaddr_in client_addr, server_addr;
 	struct hostent *hp;
 	int sd, sc;
 
-	int topic, text, operation, t;
+	int topic, text, operation, t, response;
 	int op_code;
 
 
@@ -88,34 +90,26 @@ int main(int argc, char *argv[]) {
 
 	while(1)
 	 	{
-	// 		operation = readLine(0, command, MAX_LINE);
+	 		operation = readLine(0, op_buff, MAX_LINE);
+	 		send(sd, (char *) op_buff, operation+1, 0);
 
-			
-	// 		Send the operation to the server and wait for response. 
-	// 		If response is positive, then send topic and text	
-	// 		// 
-	// 		readLine(sd, buffer, op_code+1);			
-	// 		recv(sd, (char *) &op_code, sizeof(int) ,0);
-	// 		printf("%d\n", op_code );
 
-			// if(op_code!=-1)
-			// {
+	 		recv(sd, &response, sizeof(int), 0);
+	 		printf("RECEIVED RESPONSE %d\n", response ); /*PROBLEM HERE*/
+	 		if(response == 15)
+	 		{
+	 			printf("BOOYAH\n");
 				topic = readLine(0, tema, MAX_LINE);
 				text = readLine(0, texto, MAX_LINE);
-			
+
 				send(sd, (char *) tema, topic+1, 0);
 				send(sd, (char *) texto, text+1, 0);
-			// }
-			
-			
-			
 
-			// receive response
+				printf("Message sent !\n");
+	 		}
 
-			// readLine(sd, buffer, n+1);
-			// recv(sd, (char *) &n, sizeof(int),0);
 
-			printf("Message sent !\n");
+
 		
 	}
 	close(sd);
