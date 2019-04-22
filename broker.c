@@ -23,34 +23,26 @@ void print_usage() {
 int main(int argc, char *argv[]) {
 	int  option = 0;
 	char puerto[256] = "";
-	char tema[256] = "";
-	char texto[256] = "";
-	char buffer[MAX_LINE];
-	char op_buff[256];
-	char resp_buff[256];
-	char command[MAX_LINE];
-
 	struct sockaddr_in client_addr, server_addr;
 	int sd, sc;
 	int size,val;
 	struct timeval t;
-	pthread_attr_t attr;
-    pthread_t thid[NUM_THREADS];
-    int arrayId[NUM_THREADS];
-	int topic, text, operation;
-	int tw,r;
-	int op_code, op_response, response;
-	char * temp;
+	int topic, text;
+	int op_code = -1;
+	int response, operation;
+	char tema[256] = "";
+	char texto[256] = "";
+	char op_buff[256];
 
 	
 
 	while ((option = getopt(argc, argv,"p:")) != -1) {
 		switch (option) {
 		    	case 'p' : 
-				strcpy(puerto, optarg);
+					strcpy(puerto, optarg);
 		    		break;
 		    	default: 
-				print_usage(); 
+					print_usage(); 
 		    		exit(-1);
 		    }
 	}
@@ -59,9 +51,7 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-
 	printf("Puerto: %s\n", puerto);
-
 
 	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	
@@ -82,19 +72,14 @@ int main(int argc, char *argv[]) {
 
 	printf("WAITING FOR CONNECTION\n");
 
-	sc = accept(sd, (struct sockaddr *) &client_addr, &size);
-
 	gettimeofday(&t, NULL);
     srand(t.tv_sec); 
+	sc = accept(sd, (struct sockaddr *) &client_addr, &size);
+	printf("CONNECTED\n");
 
-	while(1)
-	{		
-
+	while(1){
 		operation = readLine(sc, op_buff, MAX_LINE);
-		send(sc, (char *) op_buff, operation+1, 0);
-		send(sc, (char *) &operation, sizeof(int), 0);
-		//printf("%s\n", op_buff );
-
+		printf("buffer = %s\n", op_buff);
 
 		if(strcmp(op_buff,"PUBLISH")==0)
 		{
@@ -106,23 +91,26 @@ int main(int argc, char *argv[]) {
 			send(sc, &response, sizeof(int), 0); /*PROBLEM HERE*/
 			//send(sc, (char *)response, 2*sizeof(int), 0);
 			
-		} //else if()
-		// {
-
-		// } else if()
-		// {
-			
-		// }
-		 else
+		}else if(strcmp(op_buff,"SUB")==0)
 		{
-			printf("WASSUP\n");
+			printf("OPERATION CODE RECEIVED\n");
+			printf("%s\n", op_buff);
+			printf("OPERATION CODE APPLIED (sub)\n");
+			op_code = 1;
+			response = 15;
+			send(sc, &response, sizeof(int), 0);
+		} else
+		{
+			op_code = -1;
+			printf("ERROR\n");
 		}
 
 		switch(op_code) {
+			case -1:
+				printf("Error\n");
+				exit(0);
+				break;
 			case 1:
-				
-				
-					
 				topic = readLine(sc, tema, MAX_LINE);
 				text = readLine(sc, texto, MAX_LINE);
 
@@ -135,30 +123,17 @@ int main(int argc, char *argv[]) {
 				send(sc,(char *) &topic, sizeof(int) ,0);
 				send(sc, (char *) texto, text+1, 0);
 				send(sc,(char *) &text, sizeof(int) ,0);
-				
-	
 				break;
 			case 2:
 			case 3:
 			case 4:
 			case 5:
-
 			default: 
 				printf("WRONG OPERATION CODE\n");
-
-
+				break;
 		}
-
-				
-
-		
-		
-		
 	}
-		close(sc);
 	close(sd);
+	close(sc);
 	exit(0);
-	}
-	//return 0;
-	
-	
+}

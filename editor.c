@@ -15,7 +15,7 @@
 #define MAX_LINE_TEXTO 1024
 
 void print_usage() {
-	    printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
+	printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -24,20 +24,14 @@ int main(int argc, char *argv[]) {
 	char puerto[256]= "";
 	char tema[256]= "";
 	char texto[256]= "";
-	char buffer[MAX_LINE];
 	char op_buff[256];
-	char resp_buff[256];
-	char command[MAX_LINE];
 
-	struct sockaddr_in client_addr, server_addr;
+	struct sockaddr_in server_addr;
 	struct hostent *hp;
-	int sd, sc;
+	int sd;
 
-	int topic, text, operation, t, response;
-	int op_code;
+	int topic, text, operation, response;
 
-
-	
 	while ((option = getopt(argc, argv,"h:p:t:m:")) != -1) {
 		switch (option) {
 		        case 'h' : 
@@ -55,7 +49,7 @@ int main(int argc, char *argv[]) {
 		    	default: 
 				print_usage(); 
 		    		exit(-1);
-		    }
+		}
 	}
 	if (strcmp(host,"")==0 || strcmp(puerto,"")==0 ||
 		strcmp(tema,"")==0 || strcmp(texto,"")==0){
@@ -63,12 +57,10 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 
-
 	printf("Host: %s\n", host);
 	printf("Puerto: %s\n", puerto);
 	printf("Tema: %s\n", tema);
 	printf("texto: %s\n", texto);
-
 
 	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -88,29 +80,23 @@ int main(int argc, char *argv[]) {
 		printf("Connection works !\n");
 	}
 
-	while(1)
-	 	{
-	 		operation = readLine(0, op_buff, MAX_LINE);
-	 		send(sd, (char *) op_buff, operation+1, 0);
+	while(1) {
+		operation = readLine(0, op_buff, MAX_LINE);
+		send(sd, (char *) op_buff, operation+1, 0);
 
+		recv(sd, &response, sizeof(int), 0);
+		printf("RECEIVED RESPONSE %d\n", response ); /*PROBLEM HERE*/
+		if(response == 15)
+		{
+			printf("RESPONSE = 15\n");
+			topic = readLine(0, tema, MAX_LINE);
+			text = readLine(0, texto, MAX_LINE);
 
-	 		recv(sd, &response, sizeof(int), 0);
-	 		printf("RECEIVED RESPONSE %d\n", response ); /*PROBLEM HERE*/
-	 		if(response == 15)
-	 		{
-	 			printf("BOOYAH\n");
-				topic = readLine(0, tema, MAX_LINE);
-				text = readLine(0, texto, MAX_LINE);
+			send(sd, (char *) tema, topic+1, 0);
+			send(sd, (char *) texto, text+1, 0);
 
-				send(sd, (char *) tema, topic+1, 0);
-				send(sd, (char *) texto, text+1, 0);
-
-				printf("Message sent !\n");
-	 		}
-
-
-
-		
+			printf("Message sent !\n");
+		}
 	}
 	close(sd);
 

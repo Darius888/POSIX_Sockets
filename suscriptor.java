@@ -16,7 +16,8 @@ class suscriptor {
 	private static short _port = -1;
 	public static ObjectOutputStream out;
 	public static DataInputStream in;
-		
+	public static int op_sub = 5;
+	public static int op_unsub = 6;		
 	
 	/********************* METHODS ********************/
 	
@@ -24,8 +25,9 @@ class suscriptor {
 	{	
 		String subPort = "4000\0";
 		try{
-			out.writeObject(subPort);
-			out.writeObject(topic);
+			out.writeObject("SUB");
+			// out.writeObject(subPort);
+			// out.writeObject(topic);
 			out.flush();
 		}
 		catch(Exception e){
@@ -55,8 +57,9 @@ class suscriptor {
 	{
 		String subPort = "4000\0";
 		try{
-			out.writeObject(subPort);
-			out.writeObject(topic);
+			out.writeObject(op_unsub);
+			// out.writeObject(subPort);
+			// out.writeObject(topic);
 			out.flush();
 		}
 		catch(Exception e){
@@ -206,6 +209,14 @@ class suscriptor {
 
 			out = new ObjectOutputStream(sc.getOutputStream());
 			in = new DataInputStream(sc.getInputStream());
+
+			try{
+				out.writeObject("Connect");
+				out.flush();
+			}
+			catch(Exception e){
+				System.out.println("Error in the connection to the broker < server >: < port >");
+			}
 			
 			shell();
 			
