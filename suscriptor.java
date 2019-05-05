@@ -14,10 +14,10 @@ class suscriptor {
 	
 	private static String _server   = null;
 	private static short _port = -1;
-	public static ObjectOutputStream out;
+	public static DataOutputStream out;
 	public static DataInputStream in;
-	public static int op_sub = 5;
-	public static int op_unsub = 6;		
+	public static byte op_sub = 1;
+	public static byte op_unsub = 2;		
 	
 	/********************* METHODS ********************/
 	
@@ -25,28 +25,28 @@ class suscriptor {
 	{	
 		String subPort = "4000\0";
 		try{
-			out.writeObject("SUB");
-			// out.writeObject(subPort);
-			// out.writeObject(topic);
+			out.write(op_sub);
 			out.flush();
 		}
 		catch(Exception e){
 			System.out.println("Error in the connection to the broker < server >: < port >");
+			return -1;
 		}
-		byte response = -1;
+		byte response;
 		try{
 			response = in.readByte();
 		}
 		catch(Exception e){
 			System.out.println("Error in the connection to the broker < server >: < port >");
+			return -1;
 		}
-		if(response == 0){
+		if(response == op_sub){
 			System.out.println("c> SUBCRIBE OK");
-			System.out.println("Subscribe to: " + topic);
-			String resTopic = null;
-			String resText = null;
-			System.out.println("c > MESSAGE FROM "+resTopic+" : "+resText);
-		}else if(response == 1){
+			// System.out.println("Subscribe to: " + topic);
+			// String resTopic = null;
+			// String resText = null;
+			// System.out.println("c > MESSAGE FROM "+resTopic+" : "+resText);
+		} else{
 			System.out.println("c> SUBCRIBE FAIL");
 		}
         
@@ -57,26 +57,27 @@ class suscriptor {
 	{
 		String subPort = "4000\0";
 		try{
-			out.writeObject(op_unsub);
-			// out.writeObject(subPort);
-			// out.writeObject(topic);
+			out.write(op_unsub);
 			out.flush();
 		}
 		catch(Exception e){
 			System.out.println("Error in the connection to the broker < server >: < port >");
+			return -1;
 		}
-		byte response = -1;
+		byte response;
 		try{
 			response = in.readByte();
 		}
 		catch(Exception e){
 			System.out.println("Error in the connection to the broker < server >: < port >");
+			return -1;
 		}
+		
 		if(response == 1){
 			System.out.println("c> TOPIC NOT SUBSCRIBED");
-		}else if(response == 0){
+		}else if(response == op_unsub){
 			System.out.println("c> UNSUBCRIBE OK");
-			System.out.println("Unsubscribe from: " + topic);
+			// System.out.println("Unsubscribe from: " + topic);
 		}else if(response == 2){
 			System.out.println("c> UNSUBCRIBE FAIL");
 		}
@@ -203,20 +204,20 @@ class suscriptor {
 		}
 		
 		try{
-			String host = argv[1];
-			int port = Integer.parseInt(argv[3]);
-			Socket sc = new Socket(host, port);
+			_server = argv[1];
+			_port = Short.parseShort(argv[3]);
+			Socket sc = new Socket(_server, _port);
 
-			out = new ObjectOutputStream(sc.getOutputStream());
+			out = new DataOutputStream(sc.getOutputStream());
 			in = new DataInputStream(sc.getInputStream());
 
-			try{
-				out.writeObject("Connect");
-				out.flush();
-			}
-			catch(Exception e){
-				System.out.println("Error in the connection to the broker < server >: < port >");
-			}
+			// try{
+			// 	out.writeObject("Connect");
+			// 	out.flush();
+			// }
+			// catch(Exception e){
+			// 	System.out.println("Error in the connection to the broker < server >: < port >");
+			// }
 			
 			shell();
 			
@@ -224,7 +225,7 @@ class suscriptor {
 			out.close();
 			sc.close();
 		} catch(Exception e){
-			System.out.println("Error in the connection to the broker <server>:<port>");
+			System.out.println("Error in the connection to the broker "+_server+":"+_port);
 		}
 		System.out.println("+++ FINISHED +++");	
 	}

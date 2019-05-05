@@ -13,25 +13,19 @@
 
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
+#define OP_PUBLISH 3
 
 void print_usage() {
 	printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]){
 	int  option = 0;
 	char host[256]= "";
 	char puerto[256]= "";
 	char tema[256]= "";
 	char texto[256]= "";
-	char op_buff[256];
-
-	struct sockaddr_in server_addr;
-	struct hostent *hp;
-	int sd;
-
-	int topic, text, operation, response;
-
+	
 	while ((option = getopt(argc, argv,"h:p:t:m:")) != -1) {
 		switch (option) {
 		        case 'h' : 
@@ -62,7 +56,13 @@ int main(int argc, char *argv[]) {
 	printf("Tema: %s\n", tema);
 	printf("texto: %s\n", texto);
 
-	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	char op_buff[256];
+
+	struct sockaddr_in server_addr;
+	struct hostent *hp;
+	int sd;
+
+	int topic, text, operation, response;
 
 	bzero((char *)&server_addr, sizeof(server_addr));
 	hp = gethostbyname(argv[2]);
@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
 	memcpy(&(server_addr.sin_addr), hp->h_addr_list[0], hp->h_length);
 	server_addr.sin_family	= AF_INET;
 	server_addr.sin_port	= htons(atoi(puerto));
+
+	sd = socket(server_addr.sin_family, SOCK_STREAM, IPPROTO_TCP);
 
 	//establish connection
 	if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
@@ -80,27 +82,28 @@ int main(int argc, char *argv[]) {
 		printf("Connection works !\n");
 	}
 
-	while(1) {
+	while(1){
 		operation = readLine(0, op_buff, MAX_LINE);
-		send(sd, (char *) op_buff, operation+1, 0);
+		char op_code[1];
+		if(strcmp(op_buff, "PUBLISH") == 0){
+			op_code[0] = OP_PUBLISH;
+			ssize_t message;
+			message = write(sd, op_code, 1);
 
-		recv(sd, &response, sizeof(int), 0);
-		printf("RECEIVED RESPONSE %d\n", response ); /*PROBLEM HERE*/
-		if(response == 15)
-		{
-			printf("RESPONSE = 15\n");
-			topic = readLine(0, tema, MAX_LINE);
-			text = readLine(0, texto, MAX_LINE);
+			recv(sd, &response, sizeof(int), 0);
+			printf("RECEIVED RESPONSE %d\n", response );
+			if(response == OP_PUBLISH){
+				topic = readLine(0, tema, MAX_LINE);
+				text = readLine(0, texto, MAX_LINE);
 
-			send(sd, (char *) tema, topic+1, 0);
-			send(sd, (char *) texto, text+1, 0);
+				send(sd, (char *) tema, topic+1, 0);
+				send(sd, (char *) texto, text+1, 0);
 
-			printf("Message sent !\n");
+				printf("Message sent !\n");
+			}
 		}
 	}
 	close(sd);
 
 	exit(0);
-	//return 0;
 }
-	
