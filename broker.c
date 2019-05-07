@@ -18,6 +18,7 @@
 #define OP_SUB 1
 #define OP_UNSUB 2
 #define OP_PUBLISH 3
+#define OP_QUIT 4
 
 void* clientFunction(void *arguments);
 
@@ -143,6 +144,10 @@ void* clientFunction(void *arguments){
 			send(sc,(char *) &topic, sizeof(int) ,0);
 			send(sc, (char *) texto, text+1, 0);
 			send(sc,(char *) &text, sizeof(int) ,0);
+		} else if(op_buff[0] == OP_QUIT){
+			printf("OPERATION CODE RECEIVED : QUIT\n");
+			printf("OPERATION CODE APPLIED\n");
+			break;
 		}
 		memset(op_buff, 0, sizeof(op_buff));
 	}

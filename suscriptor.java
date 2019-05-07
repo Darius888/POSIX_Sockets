@@ -17,12 +17,12 @@ class suscriptor {
 	public static DataOutputStream out;
 	public static DataInputStream in;
 	public static byte op_sub = 1;
-	public static byte op_unsub = 2;		
+	public static byte op_unsub = 2;
+	public static byte op_quit = 4;		
 	
 	/********************* METHODS ********************/
 	
-	static int subscribe(String topic) 
-	{	
+	static int subscribe(String topic){
 		String subPort = "4000\0";
 		try{
 			out.write(op_sub);
@@ -42,7 +42,7 @@ class suscriptor {
 		}
 		if(response == op_sub){
 			System.out.println("c> SUBCRIBE OK");
-			// System.out.println("Subscribe to: " + topic);
+			System.out.println("Subscribe to: " + topic);
 			// String resTopic = null;
 			// String resText = null;
 			// System.out.println("c > MESSAGE FROM "+resTopic+" : "+resText);
@@ -53,8 +53,7 @@ class suscriptor {
 		return 0;
 	}
 
-	static int unsubscribe(String topic) 
-	{
+	static int unsubscribe(String topic){
 		String subPort = "4000\0";
 		try{
 			out.write(op_unsub);
@@ -73,15 +72,27 @@ class suscriptor {
 			return -1;
 		}
 		
-		if(response == 1){
+		if(response == op_unsub){
 			System.out.println("c> TOPIC NOT SUBSCRIBED");
 		}else if(response == op_unsub){
 			System.out.println("c> UNSUBCRIBE OK");
-			// System.out.println("Unsubscribe from: " + topic);
+			System.out.println("Unsubscribe from: " + topic);
 		}else if(response == 2){
 			System.out.println("c> UNSUBCRIBE FAIL");
 		}
         
+		return 0;
+	}
+
+	static int quit(){
+		try{
+			out.write(op_quit);
+			out.flush();
+		}
+		catch(Exception e){
+			System.out.println("Error in the connection to the broker < server >: < port >");
+			return -1;
+		}
 		return 0;
 	}
 	
@@ -125,6 +136,7 @@ class suscriptor {
                     /************** QUIT **************/
                     else if (line[0].equals("QUIT")){
 						if (line.length == 1) {
+							quit();
 							exit = true;
 						} else {
 							System.out.println("Syntax error. Use: QUIT");

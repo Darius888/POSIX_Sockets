@@ -14,6 +14,7 @@
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
 #define OP_PUBLISH 3
+#define OP_QUIT 4
 
 void print_usage() {
 	printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
@@ -101,6 +102,11 @@ int main(int argc, char *argv[]){
 
 				printf("Message sent !\n");
 			}
+		}
+		if(strcmp(op_buff, "QUIT") == 0){
+			op_code[0] = OP_QUIT;
+			ssize_t message;
+			message = write(sd, op_code, 1);
 		}
 	}
 	close(sd);
