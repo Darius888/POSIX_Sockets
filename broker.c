@@ -20,11 +20,16 @@
 #define OP_PUBLISH 3
 #define OP_QUIT 4
 
-void* clientFunction(void *arguments);
-
 pthread_mutex_t mutex;
 pthread_cond_t thread_ready;
 int notReady = 1;
+int sd, sc;
+struct sockaddr_in client_addr, server_addr;
+socklen_t size;
+char temaSub[128] = "";
+char textoSub[1024] = "";
+
+void* clientFunction(void *arguments);
 
 void print_usage() {
 	    printf("Usage: broker -p puerto \n");
@@ -51,8 +56,6 @@ int main(int argc, char *argv[]) {
 
 	printf("Puerto: %s\n", puerto);
 
-	int sd, sc;
-	struct sockaddr_in client_addr, server_addr;
 	int val;
 
 	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -80,7 +83,7 @@ int main(int argc, char *argv[]) {
 	pthread_attr_init(&client_attr);
 	pthread_attr_setdetachstate(&client_attr, PTHREAD_CREATE_DETACHED);
 
-	socklen_t size = sizeof(client_addr);
+	size = sizeof(client_addr);
 
 	while(1){
 		sc = accept(sd, (struct sockaddr *) &client_addr, &size);
@@ -100,14 +103,14 @@ int main(int argc, char *argv[]) {
 
 void* clientFunction(void *arguments){
 	int topic, text;
-	ssize_t response;
+	ssize_t response, response2;
 	ssize_t operation;
-	char tema[256] = "";
-	char texto[256] = "";
 	char op_buff[256];
+	char tema[128] = "";
+	char texto[1024] = "";
 
 	pthread_mutex_lock(&mutex);
-	int sc = *((int*)arguments);
+	sc = *((int*)arguments);
 	notReady = 0;
 	pthread_cond_signal(&thread_ready);
 	pthread_mutex_unlock(&mutex);
@@ -115,17 +118,26 @@ void* clientFunction(void *arguments){
 	printf("CONNECTED\n");
 
 	while(1){
-		operation = read(sc, op_buff, MAX_LINE);
-		printf("buffer = %s\n", op_buff);
+		operation = readLine(sc, op_buff, MAX_LINE);
+		// printf("buffer = %s\n", op_buff);
 
-		if(op_buff[0] == OP_SUB){
+		if(strcmp(op_buff, "SUBSCRIBE") == 0){
 			printf("OPERATION CODE RECEIVED : SUBSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
+			
+			operation = readLine(sc, op_buff, MAX_LINE);
+			char *topicSub;
+			topicSub = op_buff;
+			operation = readLine(sc, op_buff, MAX_LINE);
+			char *portSub;
+			portSub = op_buff;
 			char byte[1];
 			byte[0] = OP_SUB;
-			response = write(sc, byte, MAX_LINE);
-			
-		} else if(op_buff[0] == OP_PUBLISH){
+			send(sc, byte, sizeof(byte), 0);
+			strcat(temaSub, ":");
+			strcat(temaSub, textoSub);	
+			send(sc, temaSub, sizeof(temaSub), 0);		
+		} else if(strcmp(op_buff, "PUBLISH")==0){
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
 			printf("OPERATION CODE APPLIED\n");
 			char byte[1];
@@ -139,15 +151,21 @@ void* clientFunction(void *arguments){
 			printf("%s\n", tema );
 			printf("TEXT RECEIVED\n");
 			printf("%s\n", texto );
+			strcpy(temaSub, tema);
+			strcpy(textoSub, texto);
 
-			send(sc, (char *) tema, topic+1, 0);
-			send(sc,(char *) &topic, sizeof(int) ,0);
-			send(sc, (char *) texto, text+1, 0);
-			send(sc,(char *) &text, sizeof(int) ,0);
-		} else if(op_buff[0] == OP_QUIT){
+		} else if(strcmp(op_buff, "QUIT")==0){
 			printf("OPERATION CODE RECEIVED : QUIT\n");
 			printf("OPERATION CODE APPLIED\n");
 			break;
+		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
+			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
+			printf("OPERATION CODE APPLIED\n");
+			// operation = readLine(sc, op_buff, MAX_LINE);
+			// char *topicUnsub;
+			// topicUnsub = op_buff;
+		} else{
+			printf("Error in code\n");
 		}
 		memset(op_buff, 0, sizeof(op_buff));
 	}
