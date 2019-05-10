@@ -11,7 +11,7 @@
 #include <netinet/ip.h>
 #include <netdb.h>
 #include "lines.h"
-#include "RPC/storage.h"
+#include "storage.h"
 
 
 #define MAX_LINE 256
@@ -24,8 +24,8 @@
 
 void* clientFunction(void *arguments);
 void initializeStorage(char* host);
-int putTopicAndText(char* topic, char* text);
-char
+int putTopicAndText(char* host,char* topic, char* text);
+
 
 
 pthread_mutex_t mutex;
@@ -136,6 +136,7 @@ void* clientFunction(void *arguments){
 
 
 
+
 			
 		} else if(op_buff[0] == OP_PUBLISH){
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
@@ -158,6 +159,7 @@ void* clientFunction(void *arguments){
 			send(sc,(char *) &text, sizeof(int) ,0);
 
 			initializeStorage("localhost");
+			putTopicAndText("localhost",tema, topic);
 
 
 		} else if(op_buff[0] == OP_QUIT){
@@ -176,14 +178,6 @@ void initializeStorage(char* host)
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	int result_1;
-	// enum clnt_stat retval_2;
-	// int result_2;
-	// char *put_1_topic;
-	// char *put_1_text;
-	// enum clnt_stat retval_3;
-	// int result_3;
-	// char *get_1_topic;
-	// char *get_1_text;
 
 	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
 	if (clnt == NULL) {
@@ -195,21 +189,13 @@ void initializeStorage(char* host)
 	if (retval_1 != RPC_SUCCESS) {
 		clnt_perror (clnt, "call failed");
 	}
-	// retval_2 = put_1(put_1_topic, put_1_text, &result_2, clnt);
-	// if (retval_2 != RPC_SUCCESS) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
-	// retval_3 = get_1(get_1_topic, get_1_text, &result_3, clnt);
-	// if (retval_3 != RPC_SUCCESS) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
-
+	
 	printf("%d\n", result_1);
 
 	clnt_destroy (clnt);
 }
 
-int putTopicAndText(char* topic, char* text)
+int putTopicAndText(char* host, char* topic, char* text)
 {
 
 	CLIENT *clnt;
