@@ -16,16 +16,18 @@ class suscriptor {
 	private static short _port = -1;
 	public static DataOutputStream out;
 	public static DataInputStream in;
-	public static byte op_sub = 1;
-	public static byte op_unsub = 2;
-	public static byte op_quit = 4;		
+	public static Socket sc;	
 	
 	/********************* METHODS ********************/
-	
+
 	static int subscribe(String topic){
 		String subPort = "4000\0";
 		try{
-			out.write(op_sub);
+			out.write("SUBSCRIBE\0".getBytes());
+			out.flush();
+			out.write((topic+"\0").getBytes());
+			out.flush();
+			out.write(subPort.getBytes());
 			out.flush();
 		}
 		catch(Exception e){
@@ -40,23 +42,32 @@ class suscriptor {
 			System.out.println("Error in the connection to the broker < server >: < port >");
 			return -1;
 		}
-		if(response == op_sub){
+		if(response == 1){
 			System.out.println("c> SUBCRIBE OK");
 			System.out.println("Subscribe to: " + topic);
-			// String resTopic = null;
-			// String resText = null;
-			// System.out.println("c > MESSAGE FROM "+resTopic+" : "+resText);
 		} else{
 			System.out.println("c> SUBCRIBE FAIL");
 		}
-        
+		byte[] topicSub = new byte[1160];
+        try{
+			in.read(topicSub);
+			String s = new String(topicSub);
+			String [] lines = s.split(":");
+			System.out.println("c> MESSAGE FROM "+lines[0]+" : "+lines[1]);
+		}
+		catch(Exception e){
+			System.out.println("Error in the connection to the broker < server >: < port >");
+			return -1;
+		}
 		return 0;
 	}
 
 	static int unsubscribe(String topic){
 		String subPort = "4000\0";
 		try{
-			out.write(op_unsub);
+			out.write("UNSUBSCRIBE\0".getBytes());
+			out.flush();
+			out.write((topic+"\0").getBytes());
 			out.flush();
 		}
 		catch(Exception e){
@@ -72,9 +83,9 @@ class suscriptor {
 			return -1;
 		}
 		
-		if(response == op_unsub){
+		if(response == 1){
 			System.out.println("c> TOPIC NOT SUBSCRIBED");
-		}else if(response == op_unsub){
+		}else if(response == 0){
 			System.out.println("c> UNSUBCRIBE OK");
 			System.out.println("Unsubscribe from: " + topic);
 		}else if(response == 2){
@@ -86,7 +97,7 @@ class suscriptor {
 
 	static int quit(){
 		try{
-			out.write(op_quit);
+			out.write("QUIT\0".getBytes());
 			out.flush();
 		}
 		catch(Exception e){
@@ -218,18 +229,10 @@ class suscriptor {
 		try{
 			_server = argv[1];
 			_port = Short.parseShort(argv[3]);
-			Socket sc = new Socket(_server, _port);
+			sc = new Socket(_server, _port);
 
 			out = new DataOutputStream(sc.getOutputStream());
 			in = new DataInputStream(sc.getInputStream());
-
-			// try{
-			// 	out.writeObject("Connect");
-			// 	out.flush();
-			// }
-			// catch(Exception e){
-			// 	System.out.println("Error in the connection to the broker < server >: < port >");
-			// }
 			
 			shell();
 			
