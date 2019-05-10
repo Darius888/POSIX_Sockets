@@ -1,4 +1,4 @@
-BIN_FILES  = editor broker suscriptor
+BIN_FILES  = editor broker suscriptor server
 
 CC = gcc
 
@@ -16,7 +16,7 @@ all: $(BIN_FILES)
 editor: editor.o lines.o 
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-broker: broker.o lines.o 
+broker: broker.o lines.o
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 suscriptor:

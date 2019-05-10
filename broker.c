@@ -11,6 +11,8 @@
 #include <netinet/ip.h>
 #include <netdb.h>
 #include "lines.h"
+#include "storage.h"
+
 
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
@@ -19,6 +21,7 @@
 #define OP_UNSUB 2
 #define OP_PUBLISH 3
 #define OP_QUIT 4
+
 
 pthread_mutex_t mutex;
 pthread_cond_t thread_ready;
@@ -30,6 +33,9 @@ char temaSub[128] = "";
 char textoSub[1024] = "";
 
 void* clientFunction(void *arguments);
+void* clientFunction(void *arguments);
+void initializeStorage(char* host);
+int putTopicAndText(char* host,char* topic, char* text);
 
 void print_usage() {
 	    printf("Usage: broker -p puerto \n");
@@ -133,11 +139,27 @@ void* clientFunction(void *arguments){
 			portSub = op_buff;
 			char byte[1];
 			byte[0] = OP_SUB;
+      response = write(sc, byte, MAX_LINE);
+      initializeStorage("localhost");
+
+
+			
+
+			
+
+
+
+
+			
+		} else if(op_buff[0] == OP_PUBLISH){
+
 			send(sc, byte, sizeof(byte), 0);
 			strcat(temaSub, ":");
 			strcat(temaSub, textoSub);	
-			send(sc, temaSub, sizeof(temaSub), 0);		
+			send(sc, temaSub, sizeof(temaSub), 0);	
+       
 		} else if(strcmp(op_buff, "PUBLISH")==0){
+
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
 			printf("OPERATION CODE APPLIED\n");
 			char byte[1];
@@ -153,8 +175,23 @@ void* clientFunction(void *arguments){
 			printf("%s\n", texto );
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
+      
+     
+
+
+			send(sc, (char *) tema, topic+1, 0);
+			send(sc,(char *) &topic, sizeof(int) ,0);
+			send(sc, (char *) texto, text+1, 0);
+			send(sc,(char *) &text, sizeof(int) ,0);
+
+			initializeStorage("localhost");
+			putTopicAndText("localhost",tema, topic);
+
+
+		} else if(op_buff[0] == OP_QUIT){
 
 		} else if(strcmp(op_buff, "QUIT")==0){
+
 			printf("OPERATION CODE RECEIVED : QUIT\n");
 			printf("OPERATION CODE APPLIED\n");
 			break;
@@ -171,4 +208,52 @@ void* clientFunction(void *arguments){
 	}
 	close(sc);
 	pthread_exit(0);
+}
+
+void initializeStorage(char* host)
+{
+	CLIENT *clnt;
+	enum clnt_stat retval_1;
+	int result_1;
+
+	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
+	if (clnt == NULL) {
+		clnt_pcreateerror (host);
+		exit (1);
+	}
+
+	retval_1 = init_1(&result_1, clnt);
+	if (retval_1 != RPC_SUCCESS) {
+		clnt_perror (clnt, "call failed");
+	}
+	
+	printf("%d\n", result_1);
+
+	clnt_destroy (clnt);
+}
+
+int putTopicAndText(char* host, char* topic, char* text)
+{
+
+	CLIENT *clnt;
+
+	enum clnt_stat retval_2;
+	int result_2;
+	char *put_1_topic;
+	char *put_1_text;
+
+	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
+	if (clnt == NULL) {
+		clnt_pcreateerror (host);
+		exit (1);
+	}
+
+	retval_2 = put_1(put_1_topic, put_1_text, &result_2, clnt);
+	if (retval_2 != RPC_SUCCESS) {
+		clnt_perror (clnt, "call failed");
+	}
+
+	printf("%d\n", result_2);
+
+	clnt_destroy (clnt);
 }
