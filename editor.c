@@ -24,8 +24,8 @@ int main(int argc, char *argv[]){
 	int  option = 0;
 	char host[256]= "";
 	char puerto[256]= "";
-	char tema[256]= "";
-	char texto[256]= "";
+	char tema[128]= "";
+	char texto[1024]= "";
 	
 	while ((option = getopt(argc, argv,"h:p:t:m:")) != -1) {
 		switch (option) {
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
 	printf("Tema: %s\n", tema);
 	printf("texto: %s\n", texto);
 
-	char op_buff[256];
+	char op_buff[1024];
 
 	struct sockaddr_in server_addr;
 	struct hostent *hp;
@@ -85,14 +85,10 @@ int main(int argc, char *argv[]){
 
 	while(1){
 		operation = readLine(0, op_buff, MAX_LINE);
-		char op_code[1];
 		if(strcmp(op_buff, "PUBLISH") == 0){
-			op_code[0] = OP_PUBLISH;
-			ssize_t message;
-			message = write(sd, op_code, 1);
+			send(sd, "PUBLISH\0", sizeof(char *), 0);
 
 			recv(sd, &response, sizeof(int), 0);
-			printf("RECEIVED RESPONSE %d\n", response );
 			if(response == OP_PUBLISH){
 				topic = readLine(0, tema, MAX_LINE);
 				text = readLine(0, texto, MAX_LINE);
@@ -104,9 +100,9 @@ int main(int argc, char *argv[]){
 			}
 		}
 		if(strcmp(op_buff, "QUIT") == 0){
-			op_code[0] = OP_QUIT;
-			ssize_t message;
-			message = write(sd, op_code, 1);
+			send(sd, "QUIT\0", sizeof(char *), 0);
+			close(sd);
+			exit(0);
 		}
 	}
 	close(sd);
