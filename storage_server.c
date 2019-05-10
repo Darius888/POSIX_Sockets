@@ -45,14 +45,18 @@ put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
       exit(1);             
    	}
 
-   	if(fprintf(fp, "%s\n", topic ) < 0 || fprintf(fp, "%s\n", text ) <  0) 
-   	{
-   		perror("Can't write to a file");
-   		*result = 0;
-   	} else
-   	{
-   		*result = 1;
-   	}
+   	fprintf(fp, "%s\n", topic );
+   	fprintf(fp, "%s\n", text );
+   	*result = 1;
+
+   	// if(fprintf(fp, "%s\n", topic ) < 0 || fprintf(fp, "%s\n", text ) <  0) 
+   	// {
+   	// 	perror("Can't write to a file");
+   	// 	*result = 0;
+   	// } else
+   	// {
+   	// 	*result = 1;
+   	// }
    
 	fclose(fp);
 
@@ -69,36 +73,29 @@ get_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 {
 	bool_t retval;
 
-	/*topic = (char *)malloc(sizeof(char) * 128);
+	char* topicreturn = (char *)malloc(sizeof(char) * 128);
 	text = (char *)malloc(sizeof(char) * 1024);
-
 	FILE *fp;
-
 	char str[MAXCHAR];
-
 	fp=fopen("storage.txt","r");
-
 	if (fp==NULL)
 	{
 		printf("Error!");   
       	exit(1);  
 	}
-
 	while (fgets(str, MAXCHAR, fp) != NULL)
 	{
         if(strcmp(str,topic))
         {
-        	strcpy(topic_return,str);
-        	strcpy(text_return,str+1);
+        	strcpy(topicreturn,str);
+        	//strcpy(text_return,str+1);
         }
     } 
    
 	//+1 position return
-
 	
 	fclose(fp);
-
-	retval = TRUE;*/
+	retval = TRUE;
 	return retval;
 }
 

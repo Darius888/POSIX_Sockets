@@ -13,7 +13,6 @@
 #include "lines.h"
 #include "storage.h"
 
-
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
 #define NUM_THREADS 2
@@ -21,7 +20,6 @@
 #define OP_UNSUB 2
 #define OP_PUBLISH 3
 #define OP_QUIT 4
-
 
 pthread_mutex_t mutex;
 pthread_cond_t thread_ready;
@@ -33,9 +31,9 @@ char temaSub[128] = "";
 char textoSub[1024] = "";
 
 void* clientFunction(void *arguments);
-void* clientFunction(void *arguments);
 void initializeStorage(char* host);
 int putTopicAndText(char* host,char* topic, char* text);
+int getTopicAndText(char* host, char* topic, char* text);
 
 void print_usage() {
 	    printf("Usage: broker -p puerto \n");
@@ -139,27 +137,13 @@ void* clientFunction(void *arguments){
 			portSub = op_buff;
 			char byte[1];
 			byte[0] = OP_SUB;
-      response = write(sc, byte, MAX_LINE);
-      initializeStorage("localhost");
-
-
-			
-
-			
-
-
-
-
-			
-		} else if(op_buff[0] == OP_PUBLISH){
-
 			send(sc, byte, sizeof(byte), 0);
 			strcat(temaSub, ":");
 			strcat(temaSub, textoSub);	
-			send(sc, temaSub, sizeof(temaSub), 0);	
-       
-		} else if(strcmp(op_buff, "PUBLISH")==0){
+			send(sc, temaSub, sizeof(temaSub), 0);
 
+			initializeStorage("localhost");		
+		} else if(strcmp(op_buff, "PUBLISH")==0){
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
 			printf("OPERATION CODE APPLIED\n");
 			char byte[1];
@@ -175,23 +159,12 @@ void* clientFunction(void *arguments){
 			printf("%s\n", texto );
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
-      
-     
-
-
-			send(sc, (char *) tema, topic+1, 0);
-			send(sc,(char *) &topic, sizeof(int) ,0);
-			send(sc, (char *) texto, text+1, 0);
-			send(sc,(char *) &text, sizeof(int) ,0);
+			printf("INITIALIZING!!!!\n" );
 
 			initializeStorage("localhost");
-			putTopicAndText("localhost",tema, topic);
-
-
-		} else if(op_buff[0] == OP_QUIT){
+			putTopicAndText("localhost",temaSub, textoSub);
 
 		} else if(strcmp(op_buff, "QUIT")==0){
-
 			printf("OPERATION CODE RECEIVED : QUIT\n");
 			printf("OPERATION CODE APPLIED\n");
 			break;
@@ -215,6 +188,7 @@ void initializeStorage(char* host)
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	int result_1;
+	printf("INITIALIZING\n" );
 
 	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
 	if (clnt == NULL) {
@@ -227,9 +201,10 @@ void initializeStorage(char* host)
 		clnt_perror (clnt, "call failed");
 	}
 	
-	printf("%d\n", result_1);
+	printf("INITIALIZED : %d\n", result_1);
 
 	clnt_destroy (clnt);
+
 }
 
 int putTopicAndText(char* host, char* topic, char* text)
@@ -248,12 +223,41 @@ int putTopicAndText(char* host, char* topic, char* text)
 		exit (1);
 	}
 
-	retval_2 = put_1(put_1_topic, put_1_text, &result_2, clnt);
+	retval_2 = put_1(topic, text, &result_2, clnt);
+
 	if (retval_2 != RPC_SUCCESS) {
 		clnt_perror (clnt, "call failed");
 	}
 
+
+
 	printf("%d\n", result_2);
+
+	clnt_destroy (clnt);
+	return 1;
+}
+
+int getTopicAndText(char* host, char* topic, char* text)
+{
+	CLIENT *clnt;
+	enum clnt_stat retval_3;
+	int result_3;
+	char *get_1_topic;
+	char *get_1_text;
+
+
+	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
+	if (clnt == NULL) {
+		clnt_pcreateerror (host);
+		exit (1);
+	}
+
+	retval_3 = get_1(topic, text, &result_3, clnt);
+	if (retval_3 != RPC_SUCCESS) {
+		clnt_perror (clnt, "call failed");
+	}
+
+	printf("%s\n", text );
 
 	clnt_destroy (clnt);
 }

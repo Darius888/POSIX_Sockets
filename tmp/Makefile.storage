@@ -44,7 +44,7 @@ $(SERVER) : $(OBJECTS_SVC)
 	$(LINK.c) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS)
 
 $(EDITOR) : editor.o 
-	$(LINK.c) -o $(EDITOR) editor.c lines.c $(LDLIBS)
+	$(LINK.c) -o $(EDITOR) editor.c $(LDLIBS)
 
  clean:
 	 $(RM) core $(TARGETS) $(OBJECTS_CLNT) $(OBJECTS_SVC) $(CLIENT) $(SERVER)
