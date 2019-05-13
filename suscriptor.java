@@ -4,8 +4,7 @@ import java.lang.*;
 import java.net.*;
 import java.util.*;
 
-
-class suscriptor {
+class suscriptor{
 	
 	/********************* TYPES **********************/
 	
@@ -17,95 +16,119 @@ class suscriptor {
 	public static DataOutputStream out;
 	public static DataInputStream in;
 	public static Socket sc;	
+	public static byte[] topicSub = new byte[1160];
+	public static ServerSocket serverSock;
+	public static int sockPort;
+	public static String subPort;
 	
 	/********************* METHODS ********************/
 
+	/* When the subscritpion is OK, a thread is created to open a socket that listens to the broker */
+	static class SubThread extends Thread{
+		private static ServerSocket _serverSock;
+		private static DataInputStream _in;
+		private static BufferedReader _br;
+		private static String _topic;
+
+		public SubThread(String topic, ServerSocket serverSocket){
+			_topic = topic;
+			_serverSock = serverSocket;
+		}
+
+		public void run(){
+			String _text;
+			try{
+				while(true){				
+					Socket clientSocket = _serverSock.accept(); /* connection tot the broker */
+					_in = new DataInputStream(clientSocket.getInputStream());
+					_br = new BufferedReader(new InputStreamReader(_in));
+					while((_text = _br.readLine()) != null) { /* receive the message from the broker */
+						System.out.println("MESSAGE FROM "+_topic+" : "+_text);
+					}
+					serverSock.close();
+				}
+			}
+			catch(Exception e){
+				System.out.println("Error in the connection to the broker "+_server+" : "+_port);
+			}
+		}
+	}
+
 	static int subscribe(String topic){
-		String subPort = "4000\0";
 		try{
+			sc = new Socket(_server, _port);
+			out = new DataOutputStream(sc.getOutputStream());
+			in = new DataInputStream(sc.getInputStream());
+			
 			out.write("SUBSCRIBE\0".getBytes());
 			out.flush();
+
 			out.write((topic+"\0").getBytes());
 			out.flush();
+
+			serverSock = new ServerSocket(0);
+			sockPort = serverSock.getLocalPort();
+			subPort = Integer.toString(sockPort)+"\0";
 			out.write(subPort.getBytes());
 			out.flush();
+
+			if(in.readByte() == 1){
+				System.out.println("c> SUBCRIBE OK");
+				Thread thread = new SubThread(topic, serverSock);
+				thread.start();
+			} else{
+				System.out.println("c> SUBCRIBE FAIL");
+			}
+			in.close();
+			out.close();
+			sc.close();
 		}
 		catch(Exception e){
-			System.out.println("Error in the connection to the broker < server >: < port >");
-			return -1;
-		}
-		byte response;
-		try{
-			response = in.readByte();
-		}
-		catch(Exception e){
-			System.out.println("Error in the connection to the broker < server >: < port >");
-			return -1;
-		}
-		if(response == 1){
-			System.out.println("c> SUBCRIBE OK");
-			System.out.println("Subscribe to: " + topic);
-		} else{
-			System.out.println("c> SUBCRIBE FAIL");
-		}
-		byte[] topicSub = new byte[1160];
-        try{
-			in.read(topicSub);
-			String s = new String(topicSub);
-			String [] lines = s.split(":");
-			System.out.println("c> MESSAGE FROM "+lines[0]+" : "+lines[1]);
-		}
-		catch(Exception e){
-			System.out.println("Error in the connection to the broker < server >: < port >");
-			return -1;
+			System.out.println("Error in the connection to the broker "+_server+" : "+_port);
 		}
 		return 0;
 	}
 
 	static int unsubscribe(String topic){
-		String subPort = "4000\0";
 		try{
+			sc = new Socket(_server, _port);
+			out = new DataOutputStream(sc.getOutputStream());
+			in = new DataInputStream(sc.getInputStream());
+			
 			out.write("UNSUBSCRIBE\0".getBytes());
 			out.flush();
+
 			out.write((topic+"\0").getBytes());
 			out.flush();
+
+			if(in.readByte() == 1){
+				System.out.println("c> TOPIC NOT SUBSCRIBED");
+			}else if(in.readByte() == 0){
+				System.out.println("c> UNSUBCRIBE OK");
+			}else if(in.readByte() == 2){
+				System.out.println("c> UNSUBCRIBE FAIL");
+			}
+			in.close();
+			out.close();
+			sc.close();
 		}
 		catch(Exception e){
-			System.out.println("Error in the connection to the broker < server >: < port >");
-			return -1;
+			System.out.println("Error in the connection to the broker "+_server+" : "+_port);
 		}
-		byte response;
-		try{
-			response = in.readByte();
-		}
-		catch(Exception e){
-			System.out.println("Error in the connection to the broker < server >: < port >");
-			return -1;
-		}
-		
-		if(response == 1){
-			System.out.println("c> TOPIC NOT SUBSCRIBED");
-		}else if(response == 0){
-			System.out.println("c> UNSUBCRIBE OK");
-			System.out.println("Unsubscribe from: " + topic);
-		}else if(response == 2){
-			System.out.println("c> UNSUBCRIBE FAIL");
-		}
-        
 		return 0;
 	}
 
-	static int quit(){
-		try{
-			out.write("QUIT\0".getBytes());
-			out.flush();
-		}
-		catch(Exception e){
-			System.out.println("Error in the connection to the broker < server >: < port >");
-			return -1;
-		}
-		return 0;
-	}
+	// static int quit(){
+	// 	try{
+	// 		out.write("QUIT\0".getBytes());
+	// 		out.flush();
+	// 	}
+	// 	catch(Exception e){
+	// 		System.out.println("Error in the connection to the broker < server >: < port >");
+	// 		return -1;
+	// 	}
+	// 	return 0;
+	// }
 	
 	
 	
@@ -147,7 +170,7 @@ class suscriptor {
                     /************** QUIT **************/
                     else if (line[0].equals("QUIT")){
 						if (line.length == 1) {
-							quit();
+							// quit();
 							exit = true;
 						} else {
 							System.out.println("Syntax error. Use: QUIT");
@@ -229,19 +252,19 @@ class suscriptor {
 		try{
 			_server = argv[1];
 			_port = Short.parseShort(argv[3]);
-			sc = new Socket(_server, _port);
+			// sc = new Socket(_server, _port);
 
-			out = new DataOutputStream(sc.getOutputStream());
-			in = new DataInputStream(sc.getInputStream());
+			// out = new DataOutputStream(sc.getOutputStream());
+			// in = new DataInputStream(sc.getInputStream());
 			
 			shell();
 			
-			in.close();
-			out.close();
-			sc.close();
+			// in.close();
+			// out.close();
+			// sc.close();
 		} catch(Exception e){
 			System.out.println("Error in the connection to the broker "+_server+":"+_port);
 		}
-		System.out.println("+++ FINISHED +++");	
+		System.out.println("+++ FINISHED +++");
 	}
 }

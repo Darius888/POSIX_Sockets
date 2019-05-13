@@ -27,7 +27,7 @@ suscriptor:
 
 clean:
 	rm -f $(BIN_FILES) *.o
-	rm -f suscriptor.class
+	rm -f *.class
 
 .SUFFIXES:
 .PHONY : clean
