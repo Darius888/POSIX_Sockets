@@ -29,6 +29,7 @@ struct sockaddr_in client_addr, server_addr;
 socklen_t size;
 char temaSub[128] = "";
 char textoSub[1024] = "";
+char portSub[256];
 
 void* clientFunction(void *arguments);
 void initializeStorage(char* host);
@@ -105,9 +106,33 @@ int main(int argc, char *argv[]) {
 	exit(0);
 }
 
+int sendToSubscriber(char *tp, char *text) {
+
+	struct sockaddr_in server_addr;
+	struct hostent *hp;
+	int sd;
+	bzero((char *)&server_addr, sizeof(server_addr));
+	hp = gethostbyname("localhost");
+	memcpy(&(server_addr.sin_addr), hp->h_addr_list[0], hp->h_length);
+	server_addr.sin_family	= AF_INET;
+	server_addr.sin_port	= htons(atoi(portSub));
+	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
+	{
+		printf("Error in the connection to the server host : %s\n", portSub);
+	} else
+	{
+		printf("Connection works with listener\n");
+	}	
+	send(sd, textoSub, sizeof(textoSub), 0);
+	close(sd);
+
+	return 0;
+}
+
 void* clientFunction(void *arguments){
 	int topic, text;
-	ssize_t response, response2;
+	ssize_t response;
 	ssize_t operation;
 	char op_buff[256];
 	char tema[128] = "";
@@ -123,26 +148,23 @@ void* clientFunction(void *arguments){
 
 	while(1){
 		operation = readLine(sc, op_buff, MAX_LINE);
-		// printf("buffer = %s\n", op_buff);
 
 		if(strcmp(op_buff, "SUBSCRIBE") == 0){
 			printf("OPERATION CODE RECEIVED : SUBSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
 			
 			operation = readLine(sc, op_buff, MAX_LINE);
-			char *topicSub;
-			topicSub = op_buff;
-			operation = readLine(sc, op_buff, MAX_LINE);
-			char *portSub;
-			portSub = op_buff;
+			char topicSub[128];
+			strcpy(topicSub, op_buff);
+
 			char byte[1];
 			byte[0] = OP_SUB;
 			send(sc, byte, sizeof(byte), 0);
-			strcat(temaSub, ":");
-			strcat(temaSub, textoSub);	
-			send(sc, temaSub, sizeof(temaSub), 0);
 
-			initializeStorage("localhost");		
+			operation = readLine(sc, op_buff, MAX_LINE);
+			strcpy(portSub, op_buff);
+
+			initializeStorage("localhost");			
 		} else if(strcmp(op_buff, "PUBLISH")==0){
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
 			printf("OPERATION CODE APPLIED\n");
@@ -159,11 +181,11 @@ void* clientFunction(void *arguments){
 			printf("%s\n", texto );
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
+			sendToSubscriber(temaSub, textoSub);
 			printf("INITIALIZING!!!!\n" );
 
 			initializeStorage("localhost");
 			putTopicAndText("localhost",temaSub, textoSub);
-
 		} else if(strcmp(op_buff, "QUIT")==0){
 			printf("OPERATION CODE RECEIVED : QUIT\n");
 			printf("OPERATION CODE APPLIED\n");
@@ -171,11 +193,12 @@ void* clientFunction(void *arguments){
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
-			// operation = readLine(sc, op_buff, MAX_LINE);
-			// char *topicUnsub;
-			// topicUnsub = op_buff;
+			operation = readLine(sc, op_buff, MAX_LINE);
+			char topicUnsub[128];
+			strcpy(topicUnsub, op_buff);
 		} else{
 			printf("Error in code\n");
+			break;
 		}
 		memset(op_buff, 0, sizeof(op_buff));
 	}
