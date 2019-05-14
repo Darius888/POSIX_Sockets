@@ -21,6 +21,15 @@
 #define OP_PUBLISH 3
 #define OP_QUIT 4
 
+struct TopicList{
+    char topicName[128];
+    char port[128];
+    struct TopicList* nextNode;
+};
+typedef struct TopicList* Topics;
+Topics head = NULL;
+int sizeList = 0;
+
 pthread_mutex_t mutex;
 pthread_cond_t thread_ready;
 int notReady = 1;
@@ -101,32 +110,79 @@ int main(int argc, char *argv[]) {
 		}
 		notReady = 1;
 		pthread_mutex_unlock(&mutex);
+		free(arguments);
 	}
 	close(sd);
+	Topics tmp = head;
+    while(tmp != NULL){
+        free(tmp);
+        tmp = tmp->nextNode;
+    }
 	exit(0);
 }
 
-int sendToSubscriber(char *tp, char *text) {
+Topics getTopics(char* topic){
+    Topics res = head;
+    if(res == NULL){
+        return res;
+    }else if(strcmp(res->topicName , topic)==0){
+        return res;
+    } else{
+        while(res != NULL){
+            if(strcmp(res->topicName ,topic)==0){
+                return res;
+            }else if(res->nextNode == NULL){
+                return NULL;
+            }
+            else{
+                res = res->nextNode;
+            }
+        }
+    }
+    return res;
+}
+
+int addTopic(char* topicName, char* port){
+    if(getTopics(topicName) != NULL){
+        return -1;
+    }
+	Topics pTopics = (Topics) malloc(sizeof(struct TopicList));
+    strcpy(pTopics->topicName, topicName);
+    strcpy(pTopics->port, port);
+    pTopics->nextNode = NULL;
+
+    if (sizeList > 0)
+	{
+        pTopics->nextNode = head;
+    }
+    head = pTopics;
+
+    sizeList++;
+    return 0;
+}
+
+int sendToSubscriber(char *topic, char *text) {
 
 	struct sockaddr_in server_addr;
 	struct hostent *hp;
 	int sd;
-	bzero((char *)&server_addr, sizeof(server_addr));
-	hp = gethostbyname("localhost");
-	memcpy(&(server_addr.sin_addr), hp->h_addr_list[0], hp->h_length);
-	server_addr.sin_family	= AF_INET;
-	server_addr.sin_port	= htons(atoi(portSub));
-	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
-	{
-		printf("Error in the connection to the server host : %s\n", portSub);
-	} else
-	{
-		printf("Connection works with listener\n");
-	}	
-	send(sd, textoSub, sizeof(textoSub), 0);
-	close(sd);
-
+	if(getTopics(topic) != NULL){
+		bzero((char *)&server_addr, sizeof(server_addr));
+		hp = gethostbyname("localhost");
+		memcpy(&(server_addr.sin_addr), hp->h_addr_list[0], hp->h_length);
+		server_addr.sin_family	= AF_INET;
+		server_addr.sin_port	= htons(atoi(getTopics(topic)->port));
+		sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
+		{
+			printf("Error in the connection to the server host : %s\n", portSub);
+		} else
+		{
+			printf("Connection works with listener\n");
+		}	
+		send(sd, text, sizeof(text), 0);
+		close(sd);
+	}
 	return 0;
 }
 
@@ -163,6 +219,7 @@ void* clientFunction(void *arguments){
 
 			operation = readLine(sc, op_buff, MAX_LINE);
 			strcpy(portSub, op_buff);
+			addTopic(topicSub, portSub);
 
 			initializeStorage("localhost");			
 		} else if(strcmp(op_buff, "PUBLISH")==0){
