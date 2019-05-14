@@ -105,7 +105,7 @@ class suscriptor{
 				System.out.println("c> TOPIC NOT SUBSCRIBED");
 			}else if(in.readByte() == 0){
 				System.out.println("c> UNSUBCRIBE OK");
-			}else if(in.readByte() == 2){
+			}else{
 				System.out.println("c> UNSUBCRIBE FAIL");
 			}
 			in.close();

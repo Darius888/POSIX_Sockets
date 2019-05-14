@@ -161,6 +161,25 @@ int addTopic(char* topicName, char* port){
     return 0;
 }
 
+int deleteTopic(char* topic){
+    Topics tmp = getTopics(topic);
+    if(tmp == NULL){
+        return -1;
+    }
+    if(tmp == head){
+        head = head->nextNode;
+    } else{
+        Topics node = head;
+        while(node->nextNode != tmp){
+           node = node->nextNode;
+        }
+        node->nextNode = tmp->nextNode;
+    }
+    free(tmp);
+    sizeList --;
+    return 0;
+}
+
 int sendToSubscriber(char *topic, char *text) {
 
 	struct sockaddr_in server_addr;
@@ -253,6 +272,15 @@ void* clientFunction(void *arguments){
 			operation = readLine(sc, op_buff, MAX_LINE);
 			char topicUnsub[128];
 			strcpy(topicUnsub, op_buff);
+			int res = deleteTopic(topicUnsub);
+			char byte[1];
+			if(res == -1){
+				byte[0] = 1;
+				response = write(sc, byte, MAX_LINE);
+			}else if(res == 0){
+				byte[0] = 0;
+				response = write(sc, byte, MAX_LINE);
+			}
 		} else{
 			printf("Error in code\n");
 			break;
