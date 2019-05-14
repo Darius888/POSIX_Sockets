@@ -45,8 +45,13 @@ class suscriptor{
 					while((_text = _br.readLine()) != null) { /* receive the message from the broker */
 						System.out.println("MESSAGE FROM "+_topic+" : "+_text);
 					}
-					serverSock.close();
 				}
+			}
+			catch(Exception e){
+				System.out.println("Error in the connection to the broker "+_server+" : "+_port);
+			}
+			try{
+				serverSock.close();
 			}
 			catch(Exception e){
 				System.out.println("Error in the connection to the broker "+_server+" : "+_port);

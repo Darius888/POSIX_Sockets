@@ -88,8 +88,8 @@ int main(int argc, char *argv[]){
 		if(strcmp(op_buff, "PUBLISH") == 0){
 			send(sd, "PUBLISH\0", sizeof(char *), 0);
 
-			recv(sd, &response, sizeof(int), 0);
-			if(response == OP_PUBLISH){
+			operation = readLine(sd, op_buff, MAX_LINE);
+			if(strcmp(op_buff, "PUBLISH") == 0){
 				topic = readLine(0, tema, MAX_LINE);
 				text = readLine(0, texto, MAX_LINE);
 
@@ -98,11 +98,6 @@ int main(int argc, char *argv[]){
 
 				printf("Message sent !\n");
 			}
-		}
-		if(strcmp(op_buff, "QUIT") == 0){
-			send(sd, "QUIT\0", sizeof(char *), 0);
-			close(sd);
-			exit(0);
 		}
 	}
 	close(sd);

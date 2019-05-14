@@ -246,7 +246,7 @@ void* clientFunction(void *arguments){
 			printf("OPERATION CODE APPLIED\n");
 			char byte[1];
 			byte[0] = OP_PUBLISH;
-			response = write(sc, byte, MAX_LINE);
+			send(sc, "PUBLISH\0", sizeof(char *), 0);
 
 			topic = readLine(sc, tema, MAX_LINE);
 			text = readLine(sc, texto, MAX_LINE);
@@ -262,10 +262,10 @@ void* clientFunction(void *arguments){
 
 			initializeStorage("localhost");
 			putTopicAndText("localhost",temaSub, textoSub);
-		} else if(strcmp(op_buff, "QUIT")==0){
-			printf("OPERATION CODE RECEIVED : QUIT\n");
-			printf("OPERATION CODE APPLIED\n");
-			break;
+		// } else if(strcmp(op_buff, "QUIT")==0){
+		// 	printf("OPERATION CODE RECEIVED : QUIT\n");
+		// 	printf("OPERATION CODE APPLIED\n");
+		// 	break;
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
