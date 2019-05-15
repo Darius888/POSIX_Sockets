@@ -47,7 +47,9 @@ class suscriptor{
 					_in = new DataInputStream(clientSocket.getInputStream());
 					_br = new BufferedReader(new InputStreamReader(_in));
 					while((_text = _br.readLine()) != null) { /* receive the message from the broker */
-						_text = port.formatterText(_text); /* use of the web service */
+						String xml10pattern = "[^"+ "\u0009\r\n"+ "\u0020-\uD7FF"+ "\uE000-\uFFFD"+"\ud800\udc00-\udbff\udfff"+ "]";
+						String text_temp = _text.replaceAll(xml10pattern, "");
+						_text = port.formatterText(text_temp); /* use of the web service */
 						System.out.println("MESSAGE FROM "+_topic+" : "+_text);
 						System.out.print("c> ");
 					}
@@ -55,12 +57,14 @@ class suscriptor{
 			}
 			catch(Exception e){
 				System.out.println("NETWORK ERROR");
+				System.out.print("c> ");
 			}
 			try{
 				serverSock.close();
 			}
 			catch(Exception e){
 				System.out.println("NETWORK ERROR");
+				System.out.print("c> ");
 			}
 		}
 	}

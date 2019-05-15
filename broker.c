@@ -195,7 +195,7 @@ int sendToSubscriber(char *topic, char *text) {
 		{
 			printf("Connection works with listener\n");
 		}
-		send(sd, (char *) text, sizeof(text), 0);
+		send(sd, text, sizeof(text), 0);
 		close(sd);
 	}
 	return 0;
