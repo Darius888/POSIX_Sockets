@@ -17,6 +17,7 @@
 #define MAX_LINE_TEXTO 1024
 #define NUM_THREADS 2
 
+/* linked list to store the topics and the port number of the subscriber */
 struct TopicList{
     char topicName[128];
     char port[128];
@@ -96,9 +97,11 @@ int main(int argc, char *argv[]) {
 	size = sizeof(client_addr);
 
 	while(1){
+		/* connection to a client */
 		sc = accept(sd, (struct sockaddr *) &client_addr, &size);
 		int * arguments = malloc(sizeof(int) * 1);
 		arguments[0] = sc;
+		/* create a new thread for each client */
 		pthread_create(&client_thread, &client_attr, (void *)clientFunction, (void *) arguments);
 		pthread_mutex_lock(&mutex);
 		while(notReady == 1) {
@@ -109,6 +112,7 @@ int main(int argc, char *argv[]) {
 		free(arguments);
 	}
 	close(sd);
+	/* delete the linked list */
 	Topics tmp = head;
     while(tmp != NULL){
         free(tmp);
@@ -117,6 +121,7 @@ int main(int argc, char *argv[]) {
 	exit(0);
 }
 
+/* Store the topics in a linked list */
 Topics getTopics(char* topic){
     Topics res = head;
     if(res == NULL){
@@ -138,6 +143,7 @@ Topics getTopics(char* topic){
     return res;
 }
 
+/* add a new subscriber to the linked list after a subscribe operation*/
 int addTopic(char* topicName, char* port){
     if(getTopics(topicName) != NULL){
         return -1;
@@ -157,6 +163,7 @@ int addTopic(char* topicName, char* port){
     return 0;
 }
 
+/* remove a subscriber from the linked list after an unsubscribe operation */
 int deleteTopic(char* topic){
     Topics tmp = getTopics(topic);
     if(tmp == NULL){
@@ -176,6 +183,7 @@ int deleteTopic(char* topic){
     return 0;
 }
 
+/* function in charge of sending the text of a topic one client is subscribed */
 int sendToSubscriber(char *topic, char *text) {
 
 	struct sockaddr_in server_addr;
@@ -188,6 +196,7 @@ int sendToSubscriber(char *topic, char *text) {
 		server_addr.sin_family	= AF_INET;
 		server_addr.sin_port	= htons(atoi(getTopics(topic)->port));
 		sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		/* connection to the subscriber */
 		if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
 		{
 			printf("Error in the connection to the server host : %s\n", portSub);
@@ -195,12 +204,13 @@ int sendToSubscriber(char *topic, char *text) {
 		{
 			printf("Connection works with listener\n");
 		}
-		send(sd, text, sizeof(text), 0);
+		send(sd, text, sizeof(text), 0); /* send the text corresponding to the topic */
 		close(sd);
 	}
 	return 0;
 }
 
+/* new client thread */
 void* clientFunction(void *arguments){
 	char op_buff[256] = {'\0'};
 	char tema[128] = "";
@@ -216,11 +226,11 @@ void* clientFunction(void *arguments){
 	printf("CONNECTED\n");
 
 	while(1){
-		readLine(sc, op_buff, MAX_LINE);
-
+		readLine(sc, op_buff, MAX_LINE); /* read the operation */
+		/* check which operation to do */
 		if(strcmp(op_buff, "SUBSCRIBE") == 0){
 			printf("OPERATION CODE RECEIVED : SUBSCRIBE\n");
-			
+			/* read the topic and port number of the subscriber */
 			readLine(sc, op_buff, MAX_LINE);
 			char topicSub[128];
 			strcpy(topicSub, op_buff);
@@ -228,7 +238,8 @@ void* clientFunction(void *arguments){
 			readLine(sc, op_buff, MAX_LINE);
 			strcpy(portSub, op_buff);
 			char byte[1];
-			if(addTopic(topicSub, portSub) == 0){
+			/* send the byte of response if the operation is successful or not */
+			if(addTopic(topicSub, portSub) == 0){ /* add to the linked list */
 				byte[0] = 0;
 				send(sc, byte, sizeof(byte), 0);
 			} else{
@@ -238,7 +249,7 @@ void* clientFunction(void *arguments){
 			initializeStorage("localhost");			
 		} else if(strcmp(op_buff, "PUBLISH")==0){
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
-			
+			/* read the topic and text published */
 			readLine(sc, tema, MAX_LINE);
 			readLine(sc, texto, MAX_LINE);
 
@@ -248,8 +259,8 @@ void* clientFunction(void *arguments){
 			printf("%s\n", texto );
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
-			sendToSubscriber(temaSub, textoSub);
-
+			sendToSubscriber(temaSub, textoSub); /* send the text if someone is subscribed */
+			/* store the topic and text */
 			initializeStorage("localhost");
 			putTopicAndText("localhost",temaSub, textoSub);
 			getTopicAndText("localhost","q", retText );
@@ -257,10 +268,12 @@ void* clientFunction(void *arguments){
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
 			readLine(sc, op_buff, MAX_LINE);
+			/* read the topic of the subscriber */
 			char topicUnsub[128];
 			strcpy(topicUnsub, op_buff);
-			int res = deleteTopic(topicUnsub);
+			int res = deleteTopic(topicUnsub); /* remove from the linked list */
 			char byte[1];
+			/* send the byte of response if the operation is successful or not */
 			if(res == -1){
 				byte[0] = 1;
 				write(sc, byte, MAX_LINE);
