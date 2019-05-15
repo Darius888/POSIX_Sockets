@@ -212,6 +212,7 @@ void* clientFunction(void *arguments){
 	char op_buff[256];
 	char tema[128] = "";
 	char texto[1024] = "";
+	char retText[1024] = "";
 
 	pthread_mutex_lock(&mutex);
 	sc = *((int*)arguments);
@@ -258,14 +259,12 @@ void* clientFunction(void *arguments){
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
 			sendToSubscriber(temaSub, textoSub);
-			printf("INITIALIZING!!!!\n" );
+			
 
 			initializeStorage("localhost");
 			putTopicAndText("localhost",temaSub, textoSub);
-		// } else if(strcmp(op_buff, "QUIT")==0){
-		// 	printf("OPERATION CODE RECEIVED : QUIT\n");
-		// 	printf("OPERATION CODE APPLIED\n");
-		// 	break;
+			getTopicAndText("localhost","88", retText );
+
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
@@ -365,7 +364,9 @@ int getTopicAndText(char* host, char* topic, char* text)
 		clnt_perror (clnt, "call failed");
 	}
 
-	printf("%s\n", text );
+	printf("GET TEXT BY TOPIC IS SUCCESS %d\n", result_3);
+	
+	printf("RECEIVED TEXT: %s\n", text );
 
 	clnt_destroy (clnt);
 }
