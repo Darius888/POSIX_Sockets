@@ -357,9 +357,9 @@ int getTopicAndText(char* host, char* topic, char* text)
 	get_1_text = result_3;
 
 
-	printf("GET TEXT BY TOPIC IS SUCCESS %c\n", *get_1_text);
+	// printf("GET TEXT BY TOPIC IS SUCCESS %c\n", *get_1_text);
 	
-	//printf("RECEIVED TEXT: %s\n", text );
+	printf("RECEIVED TEXT: %s\n", text );
 
 	clnt_destroy (clnt);
 }

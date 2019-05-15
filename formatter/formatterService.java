@@ -1,8 +1,14 @@
+package formatter;
+
+import javax.jws.WebService;
+import javax.jws.WebMethod;
 import com.dataaccess.webservicesserver.*;
 import java.math.*;
 
-public class formatter{
-    public static void main(String[] args) throws Exception{
+@WebService
+public class formatterService{
+    @WebMethod
+    public String formatterText(String text){
         NumberConversion service= new NumberConversion();
         NumberConversionSoapType port = service.getNumberConversionSoap();
         String s=new String("Test  message 1 example 24");
@@ -27,5 +33,7 @@ public class formatter{
             st2 = st2+line[i]+" ";
         }
         System.out.println("String 2 "+st2);
+        return text;
     }
 }
+
