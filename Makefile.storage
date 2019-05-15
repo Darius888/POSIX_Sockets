@@ -4,8 +4,8 @@
 
 CLIENT = broker
 SERVER = storage_server
-EDITOR = editor
-SUSCRIPTOR = suscriptor
+PUBLISHER = publisher
+SUBSCRIBER = subscriber
 
 SOURCES_CLNT.c = 
 SOURCES_CLNT.h = 
@@ -28,7 +28,7 @@ LDLIBS += -lnsl -lpthread
 
 # Targets 
 
-all : $(CLIENT) $(SERVER) $(EDITOR) $(SUSCRIPTOR)
+all : $(CLIENT) $(SERVER) $(PUBLISHER) $(SUBSCRIBER)
 
 $(TARGETS) : $(SOURCES.x) 
 	rpcgen $(RPCGENFLAGS) $(SOURCES.x)
@@ -43,12 +43,12 @@ $(CLIENT) : $(OBJECTS_CLNT)
 $(SERVER) : $(OBJECTS_SVC) 
 	$(LINK.c) -o $(SERVER) $(OBJECTS_SVC) $(LDLIBS)
 
-$(EDITOR) : editor.o 
-	$(LINK.c) -o $(EDITOR) editor.c lines.c $(LDLIBS)
+$(PUBLISHER) : publisher.o 
+	$(LINK.c) -o $(PUBLISHER) publisher.c lines.c $(LDLIBS)
 
-$(SUSCRIPTOR) : suscriptor.java
+$(SUBSCRIBER) : subscriber.java
 	javac *.java
 
  clean:
-	rm -f *.o *.class broker storage_server editor
+	rm -f *.o *.class broker storage_server publisher
 

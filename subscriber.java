@@ -6,7 +6,7 @@ import java.util.*;
 import service.FormatterService;
 import service.FormatterServiceService;
 
-class suscriptor{
+class subscriber{
 	
 	/********************* TYPES **********************/
 	

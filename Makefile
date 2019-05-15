@@ -1,4 +1,4 @@
-BIN_FILES  = editor broker suscriptor server
+BIN_FILES  = publisher broker subscriber server
 
 CC = gcc
 
@@ -13,13 +13,13 @@ all: CFLAGS=$(CCGLAGS)
 all: $(BIN_FILES)
 .PHONY : all
 
-editor: editor.o lines.o 
+publisher: publisher.o lines.o 
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 broker: broker.o lines.o
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-suscriptor:
+subscriber:
 	javac *.java
 
 %.o: %.c
