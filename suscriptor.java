@@ -15,8 +15,7 @@ class suscriptor{
 	private static short _port = -1;
 	public static DataOutputStream out;
 	public static DataInputStream in;
-	public static Socket sc;	
-	public static byte[] topicSub = new byte[1160];
+	public static Socket sc;
 	public static ServerSocket serverSock;
 	public static int sockPort;
 	public static String subPort;
@@ -30,7 +29,7 @@ class suscriptor{
 		private static BufferedReader _br;
 		private static String _topic;
 
-		public SubThread(String topic, ServerSocket serverSocket){
+		public SubThread(String topic, ServerSocket serverSocket){ /* Constructor */
 			_topic = topic;
 			_serverSock = serverSocket;
 		}
@@ -39,51 +38,55 @@ class suscriptor{
 			String _text;
 			try{
 				while(true){				
-					Socket clientSocket = _serverSock.accept(); /* connection tot the broker */
+					Socket clientSocket = _serverSock.accept(); /* connection to the broker */
 					_in = new DataInputStream(clientSocket.getInputStream());
 					_br = new BufferedReader(new InputStreamReader(_in));
 					while((_text = _br.readLine()) != null) { /* receive the message from the broker */
 						System.out.println("MESSAGE FROM "+_topic+" : "+_text);
+						System.out.print("c> ");
 					}
 				}
 			}
 			catch(Exception e){
-				System.out.println("Error in the connection to the broker "+_server+" : "+_port);
+				System.out.println("c> NETWORK ERROR");
 			}
 			try{
 				serverSock.close();
 			}
 			catch(Exception e){
-				System.out.println("Error in the connection to the broker "+_server+" : "+_port);
+				System.out.println("c> NETWORK ERROR");
 			}
 		}
 	}
 
 	static int subscribe(String topic){
 		try{
-			sc = new Socket(_server, _port);
+			sc = new Socket(_server, _port); /* connection to the broker */
 			out = new DataOutputStream(sc.getOutputStream());
 			in = new DataInputStream(sc.getInputStream());
 			
-			out.write("SUBSCRIBE\0".getBytes());
+			out.write("SUBSCRIBE\0".getBytes()); /* identify the operation */
 			out.flush();
 
-			out.write((topic+"\0").getBytes());
+			out.write((topic+"\0").getBytes()); /* send the topic to subscribe */
 			out.flush();
 
-			serverSock = new ServerSocket(0);
-			sockPort = serverSock.getLocalPort();
+			serverSock = new ServerSocket(0); /* create the new socket with a valid free port number */
+			sockPort = serverSock.getLocalPort(); /* get the port number to send to the broker */
 			subPort = Integer.toString(sockPort)+"\0";
-			out.write(subPort.getBytes());
+			out.write(subPort.getBytes()); /* send the port number where the susbscriber receives the messages */
 			out.flush();
 
-			if(in.readByte() == 1){
+			/* check if the operation is successful or not */
+			if(in.readByte() == 0){
 				System.out.println("c> SUBCRIBE OK");
+				/* a thread is created to listen to the broker  */
 				Thread thread = new SubThread(topic, serverSock);
 				thread.start();
-			} else{
+			} else if(in.readByte() == -1){
 				System.out.println("c> SUBCRIBE FAIL");
 			}
+			/* close the connection */
 			in.close();
 			out.close();
 			sc.close();
@@ -96,23 +99,24 @@ class suscriptor{
 
 	static int unsubscribe(String topic){
 		try{
-			sc = new Socket(_server, _port);
+			sc = new Socket(_server, _port); /* connection to the broker */
 			out = new DataOutputStream(sc.getOutputStream());
 			in = new DataInputStream(sc.getInputStream());
 			
-			out.write("UNSUBSCRIBE\0".getBytes());
+			out.write("UNSUBSCRIBE\0".getBytes()); /* identify the operation */
 			out.flush();
 
-			out.write((topic+"\0").getBytes());
+			out.write((topic+"\0").getBytes()); /* send the topic to unsubscribe */
 			out.flush();
 
 			if(in.readByte() == 1){
 				System.out.println("c> TOPIC NOT SUBSCRIBED");
 			}else if(in.readByte() == 0){
 				System.out.println("c> UNSUBCRIBE OK");
-			}else{
+			}else if(in.readByte() == 2){
 				System.out.println("c> UNSUBCRIBE FAIL");
 			}
+			/* close the connection */
 			in.close();
 			out.close();
 			sc.close();
@@ -121,21 +125,7 @@ class suscriptor{
 			System.out.println("Error in the connection to the broker "+_server+" : "+_port);
 		}
 		return 0;
-	}
-
-	// static int quit(){
-	// 	try{
-	// 		out.write("QUIT\0".getBytes());
-	// 		out.flush();
-	// 	}
-	// 	catch(Exception e){
-	// 		System.out.println("Error in the connection to the broker < server >: < port >");
-	// 		return -1;
-	// 	}
-	// 	return 0;
-	// }
-	
-	
+	}	
 	
 	/**
 	 * @brief Command interpreter for the suscriptor. It calls the protocol functions.
@@ -175,7 +165,6 @@ class suscriptor{
                     /************** QUIT **************/
                     else if (line[0].equals("QUIT")){
 						if (line.length == 1) {
-							// quit();
 							exit = true;
 						} else {
 							System.out.println("Syntax error. Use: QUIT");
@@ -255,18 +244,11 @@ class suscriptor{
 		}
 		
 		try{
-			_server = argv[1];
-			_port = Short.parseShort(argv[3]);
-			// sc = new Socket(_server, _port);
-
-			// out = new DataOutputStream(sc.getOutputStream());
-			// in = new DataInputStream(sc.getInputStream());
+			_server = argv[1]; /* IP of the broker */
+			_port = Short.parseShort(argv[3]); /* port of the broker */
 			
 			shell();
 			
-			// in.close();
-			// out.close();
-			// sc.close();
 		} catch(Exception e){
 			System.out.println("Error in the connection to the broker "+_server+":"+_port);
 		}

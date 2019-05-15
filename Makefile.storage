@@ -50,5 +50,5 @@ $(SUSCRIPTOR) : suscriptor.java
 	javac suscriptor.java
 
  clean:
-	rm -f $(BIN_FILES) *.o *.class broker storage_server editor
+	rm -f *.o *.class broker storage_server editor
 

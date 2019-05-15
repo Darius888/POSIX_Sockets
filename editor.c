@@ -13,8 +13,6 @@
 
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
-#define OP_PUBLISH 3
-#define OP_QUIT 4
 
 void print_usage() {
 	printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
@@ -54,8 +52,6 @@ int main(int argc, char *argv[]){
 
 	printf("Host: %s\n", host);
 	printf("Puerto: %s\n", puerto);
-	printf("Tema: %s\n", tema);
-	printf("texto: %s\n", texto);
 
 	char op_buff[1024];
 
@@ -63,7 +59,7 @@ int main(int argc, char *argv[]){
 	struct hostent *hp;
 	int sd;
 
-	int topic, text, operation, response;
+	int topic, text;
 
 	bzero((char *)&server_addr, sizeof(server_addr));
 	hp = gethostbyname(argv[2]);
@@ -74,33 +70,26 @@ int main(int argc, char *argv[]){
 
 	sd = socket(server_addr.sin_family, SOCK_STREAM, IPPROTO_TCP);
 
-	//establish connection
+	/* connection to the broker */
 	if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
 	{
 		printf("Error in the connection to the server %s : %s\n", host, puerto);
-	} else
-	{
-		printf("Connection works !\n");
 	}
+	readLine(0, op_buff, MAX_LINE);
+	if(strcmp(op_buff, "PUBLISH") == 0){
+		send(sd, "PUBLISH\0", sizeof(char *), 0); /* identify the operation */
 
-	while(1){
-		operation = readLine(0, op_buff, MAX_LINE);
-		if(strcmp(op_buff, "PUBLISH") == 0){
-			send(sd, "PUBLISH\0", sizeof(char *), 0);
+		topic = readLine(0, tema, MAX_LINE);
+		text = readLine(0, texto, MAX_LINE); 
 
-			operation = readLine(sd, op_buff, MAX_LINE);
-			if(strcmp(op_buff, "PUBLISH") == 0){
-				topic = readLine(0, tema, MAX_LINE);
-				text = readLine(0, texto, MAX_LINE);
+		strcat(tema, "\0");
+		strcat(texto, "\0");
 
-				send(sd, (char *) tema, topic+1, 0);
-				send(sd, (char *) texto, text+1, 0);
-
-				printf("Message sent !\n");
-			}
-		}
+		send(sd, (char *) tema, topic+1, 0); /* send the topic name */
+		send(sd, (char *) texto, text+1, 0); /* send the text associated with the topic */
 	}
+	
+	/* close the connection */
 	close(sd);
-
 	exit(0);
 }

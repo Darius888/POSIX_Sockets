@@ -16,10 +16,6 @@
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
 #define NUM_THREADS 2
-#define OP_SUB 1
-#define OP_UNSUB 2
-#define OP_PUBLISH 3
-#define OP_QUIT 4
 
 struct TopicList{
     char topicName[128];
@@ -206,10 +202,7 @@ int sendToSubscriber(char *topic, char *text) {
 }
 
 void* clientFunction(void *arguments){
-	int topic, text;
-	ssize_t response;
-	ssize_t operation;
-	char op_buff[256];
+	char op_buff[256] = {'\0'};
 	char tema[128] = "";
 	char texto[1024] = "";
 	char retText[1024] = "";
@@ -223,34 +216,31 @@ void* clientFunction(void *arguments){
 	printf("CONNECTED\n");
 
 	while(1){
-		operation = readLine(sc, op_buff, MAX_LINE);
+		readLine(sc, op_buff, MAX_LINE);
 
 		if(strcmp(op_buff, "SUBSCRIBE") == 0){
 			printf("OPERATION CODE RECEIVED : SUBSCRIBE\n");
-			printf("OPERATION CODE APPLIED\n");
 			
-			operation = readLine(sc, op_buff, MAX_LINE);
+			readLine(sc, op_buff, MAX_LINE);
 			char topicSub[128];
 			strcpy(topicSub, op_buff);
 
-			char byte[1];
-			byte[0] = OP_SUB;
-			send(sc, byte, sizeof(byte), 0);
-
-			operation = readLine(sc, op_buff, MAX_LINE);
+			readLine(sc, op_buff, MAX_LINE);
 			strcpy(portSub, op_buff);
-			addTopic(topicSub, portSub);
-
+			char byte[1];
+			if(addTopic(topicSub, portSub) == 0){
+				byte[0] = 0;
+				send(sc, byte, sizeof(byte), 0);
+			} else{
+				byte[0] = -1;
+				send(sc, byte, sizeof(byte), 0);
+			}
 			initializeStorage("localhost");			
 		} else if(strcmp(op_buff, "PUBLISH")==0){
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
-			printf("OPERATION CODE APPLIED\n");
-			char byte[1];
-			byte[0] = OP_PUBLISH;
-			send(sc, "PUBLISH\0", sizeof(char *), 0);
-
-			topic = readLine(sc, tema, MAX_LINE);
-			text = readLine(sc, texto, MAX_LINE);
+			
+			readLine(sc, tema, MAX_LINE);
+			readLine(sc, texto, MAX_LINE);
 
 			printf("TOPIC RECEIVED\n");
 			printf("%s\n", tema );
@@ -259,7 +249,6 @@ void* clientFunction(void *arguments){
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
 			sendToSubscriber(temaSub, textoSub);
-			
 
 			initializeStorage("localhost");
 			putTopicAndText("localhost",temaSub, textoSub);
@@ -267,21 +256,22 @@ void* clientFunction(void *arguments){
 
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
-			printf("OPERATION CODE APPLIED\n");
-			operation = readLine(sc, op_buff, MAX_LINE);
+			readLine(sc, op_buff, MAX_LINE);
 			char topicUnsub[128];
 			strcpy(topicUnsub, op_buff);
 			int res = deleteTopic(topicUnsub);
 			char byte[1];
 			if(res == -1){
 				byte[0] = 1;
-				response = write(sc, byte, MAX_LINE);
+				write(sc, byte, MAX_LINE);
 			}else if(res == 0){
 				byte[0] = 0;
-				response = write(sc, byte, MAX_LINE);
+				write(sc, byte, MAX_LINE);
+			}else{
+				byte[0] = 2;
+				write(sc, byte, MAX_LINE);
 			}
 		} else{
-			printf("Error in code\n");
 			break;
 		}
 		memset(op_buff, 0, sizeof(op_buff));
