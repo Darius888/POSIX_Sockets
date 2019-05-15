@@ -14,6 +14,7 @@ struct Tuple
 	char* text;
 };
 
+/* Storage initialization function which returns 1 if everything is as expected */
 bool_t
 init_1_svc(int *result, struct svc_req *rqstp)
 {
@@ -22,10 +23,12 @@ init_1_svc(int *result, struct svc_req *rqstp)
 	*result = 1;
 	
 	retval = TRUE;
-//a
+
 	return retval;
 }
 
+
+/* Topic and text storing function. */
 bool_t
 put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 {
@@ -33,7 +36,7 @@ put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 
 	FILE *fp;
 
-	fp=fopen("storage.txt","ab");
+	fp=fopen("storage.txt","ab"); // opens file with mode to add more without overwriting
 
 	if(fp == NULL)
    	{
@@ -57,7 +60,8 @@ put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 
 	return retval;
 }
-//a
+
+/* Function which retrieves text from the storage by topic */
 bool_t
 get_1_svc(char *topic, char *text, char **result,  struct svc_req *rqstp)
 {
@@ -71,7 +75,7 @@ get_1_svc(char *topic, char *text, char **result,  struct svc_req *rqstp)
 
 	text = malloc(500*sizeof(char *));
 	
-	if((fp = fopen("storage.txt", "r")) == NULL) {
+	if((fp = fopen("storage.txt", "r")) == NULL) { // opens file in reading mode
 		return(-1);
 	}
 
@@ -82,7 +86,7 @@ get_1_svc(char *topic, char *text, char **result,  struct svc_req *rqstp)
 			printf("A match found on line: %d\n", line_num);
 			printf("\n%s\n", temp);
 			
-			while (fgets(line, 512, fp) != NULL) {
+			while (fgets(line, 512, fp) != NULL) { /* If the topic is found start reading until the match+1 line */
 	       		i++;
 	        	if(i == line_num+1)
 	       		 {
@@ -106,10 +110,9 @@ get_1_svc(char *topic, char *text, char **result,  struct svc_req *rqstp)
 	if(fp) {
 		fclose(fp);
 	}	
-
-	printf("TEXT RELATED TO TOPIC IS:  %s", text);  
 	*result = text;
-	printf("EEEE %s\n", *result );
+	printf("TEXT RELATED TO TOPIC IS:  %s", *result);
+
 	retval = TRUE;
 	return retval;
 }
@@ -125,6 +128,3 @@ storage_1_freeresult (SVCXPRT *transp, xdrproc_t xdr_result, caddr_t result)
 
 	return 1;
 }
-
-
-
