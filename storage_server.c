@@ -22,7 +22,7 @@ init_1_svc(int *result, struct svc_req *rqstp)
 	*result = 1;
 	
 	retval = TRUE;
-
+//a
 	return retval;
 }
 
@@ -59,7 +59,7 @@ put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 }
 //a
 bool_t
-get_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
+get_1_svc(char *topic, char *text, char **result,  struct svc_req *rqstp)
 {
 	bool_t retval;
 	FILE *fp;
@@ -69,7 +69,7 @@ get_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 	char line[512];
 	int i=1;	
 
-	text = malloc(25*sizeof(char));
+	text = malloc(500*sizeof(char *));
 	
 	if((fp = fopen("storage.txt", "r")) == NULL) {
 		return(-1);
@@ -108,7 +108,8 @@ get_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 	}	
 
 	printf("TEXT RELATED TO TOPIC IS:  %s", text);  
-	*result = 1;
+	*result = text;
+	printf("EEEE %s\n", *result );
 	retval = TRUE;
 	return retval;
 }
@@ -124,5 +125,6 @@ storage_1_freeresult (SVCXPRT *transp, xdrproc_t xdr_result, caddr_t result)
 
 	return 1;
 }
+
 
 

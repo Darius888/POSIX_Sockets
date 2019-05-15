@@ -28,7 +28,7 @@ LDLIBS += -lnsl -lpthread
 
 # Targets 
 
-all : $(CLIENT) $(SERVER) $(EDITOR)
+all : $(CLIENT) $(SERVER) $(EDITOR) $(SUSCRIPTOR)
 
 $(TARGETS) : $(SOURCES.x) 
 	rpcgen $(RPCGENFLAGS) $(SOURCES.x)

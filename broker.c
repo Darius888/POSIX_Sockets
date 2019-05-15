@@ -263,7 +263,7 @@ void* clientFunction(void *arguments){
 
 			initializeStorage("localhost");
 			putTopicAndText("localhost",temaSub, textoSub);
-			getTopicAndText("localhost","88", retText );
+			getTopicAndText("localhost","q", retText );
 
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
@@ -348,7 +348,7 @@ int getTopicAndText(char* host, char* topic, char* text)
 {
 	CLIENT *clnt;
 	enum clnt_stat retval_3;
-	int result_3;
+	char* result_3;
 	char *get_1_topic;
 	char *get_1_text;
 
@@ -364,9 +364,12 @@ int getTopicAndText(char* host, char* topic, char* text)
 		clnt_perror (clnt, "call failed");
 	}
 
-	printf("GET TEXT BY TOPIC IS SUCCESS %d\n", result_3);
+	get_1_text = result_3;
+
+
+	printf("GET TEXT BY TOPIC IS SUCCESS %c\n", *get_1_text);
 	
-	printf("RECEIVED TEXT: %s\n", text );
+	//printf("RECEIVED TEXT: %s\n", text );
 
 	clnt_destroy (clnt);
 }

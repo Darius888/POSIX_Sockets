@@ -30,7 +30,7 @@ put_1(char *topic, char *text, int *clnt_res,  CLIENT *clnt)
 }
 
 enum clnt_stat 
-get_1(char *topic, char *text, char **clnt_res,  CLIENT *clnt)
+get_1(char *topic, char *text, int *clnt_res,  CLIENT *clnt)
 {
 	get_1_argument arg;
 	arg.topic = topic;

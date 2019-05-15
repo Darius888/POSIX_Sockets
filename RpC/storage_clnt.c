@@ -36,6 +36,6 @@ get_1(char *topic, char *text, char **clnt_res,  CLIENT *clnt)
 	arg.topic = topic;
 	arg.text = text;
 	return (clnt_call (clnt, GET, (xdrproc_t) xdr_get_1_argument, (caddr_t) &arg,
-		(xdrproc_t) xdr_int, (caddr_t) clnt_res,
+		(xdrproc_t) xdr_wrapstring, (caddr_t) clnt_res,
 		TIMEOUT));
 }
