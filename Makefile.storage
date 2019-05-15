@@ -47,7 +47,7 @@ $(EDITOR) : editor.o
 	$(LINK.c) -o $(EDITOR) editor.c lines.c $(LDLIBS)
 
 $(SUSCRIPTOR) : suscriptor.java
-	javac suscriptor.java
+	javac *.java
 
  clean:
 	rm -f *.o *.class broker storage_server editor

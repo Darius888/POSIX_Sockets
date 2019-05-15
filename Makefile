@@ -20,7 +20,7 @@ broker: broker.o lines.o
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 suscriptor:
-	javac suscriptor.java
+	javac *.java
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
