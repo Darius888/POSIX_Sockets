@@ -3,8 +3,8 @@ import gnu.getopt.Getopt;
 import java.lang.*;
 import java.net.*;
 import java.util.*;
-import formatterService.FormatterService;
-import formatterService.FormatterServiceService;
+// import formatterService.FormatterService;
+// import formatterService.FormatterServiceService;
 
 class suscriptor{
 	
@@ -39,8 +39,8 @@ class suscriptor{
 		public void run(){
 			String _text;
 			/* initialize the web service that consists of formatting the text */
-			FormatterServiceService service = new FormatterServiceService();
-			FormatterService port = service.getFormatterServicePort();
+			// FormatterServiceService service = new FormatterServiceService();
+			// FormatterService port = service.getFormatterServicePort();
 			try{
 				while(true){				
 					Socket clientSocket = _serverSock.accept(); /* connection to the broker */
