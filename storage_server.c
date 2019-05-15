@@ -23,10 +23,6 @@ init_1_svc(int *result, struct svc_req *rqstp)
 	
 	retval = TRUE;
 
-	/*
-	 * insert server code here
-	 */
-
 	return retval;
 }
 
@@ -37,13 +33,14 @@ put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 
 	FILE *fp;
 
-	fp=fopen("storage.txt","w");
+	fp=fopen("storage.txt","ab");
 
 	if(fp == NULL)
    	{
       printf("Error!");   
       exit(1);             
    	}
+
 
    	if(fprintf(fp, "%s\n", topic ) < 0 || fprintf(fp, "%s\n", text ) <  0) 
    	{
@@ -56,49 +53,63 @@ put_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
    
 	fclose(fp);
 
-	/*
-	 * insert server code here
-	 */
 	retval = TRUE;
 
 	return retval;
 }
-
+//a
 bool_t
 get_1_svc(char *topic, char *text, int *result,  struct svc_req *rqstp)
 {
 	bool_t retval;
-
-	/*topic = (char *)malloc(sizeof(char) * 128);
-	text = (char *)malloc(sizeof(char) * 1024);
-
 	FILE *fp;
+	int line_num = 1;
+	int find_result = 0;
+	char temp[512];
+	char line[512];
+	int i=1;	
 
-	char str[MAXCHAR];
-
-	fp=fopen("storage.txt","r");
-
-	if (fp==NULL)
-	{
-		printf("Error!");   
-      	exit(1);  
+	text = malloc(25*sizeof(char));
+	
+	if((fp = fopen("storage.txt", "r")) == NULL) {
+		return(-1);
 	}
 
-	while (fgets(str, MAXCHAR, fp) != NULL)
-	{
-        if(strcmp(str,topic))
-        {
-        	strcpy(topic_return,str);
-        	strcpy(text_return,str+1);
-        }
-    } 
-   
-	//+1 position return
+	while(fgets(temp, 512, fp) != NULL) {
+		line_num++;
+		 i++;
+		if((strstr(temp, topic)) != NULL) {
+			printf("A match found on line: %d\n", line_num);
+			printf("\n%s\n", temp);
+			
+			while (fgets(line, 512, fp) != NULL) {
+	       		i++;
+	        	if(i == line_num+1)
+	       		 {
+	           		 
+	           		 strcpy(text,line); 
+	       		 }
+	        
+    			}
+			find_result++;
+			
+		}
+		
+		
+	}
 
-	
-	fclose(fp);
 
-	retval = TRUE;*/
+	if(find_result == 0) {
+		printf("\nSorry, couldn't find a match.\n");
+	}
+
+	if(fp) {
+		fclose(fp);
+	}	
+
+	printf("TEXT RELATED TO TOPIC IS:  %s", text);  
+	*result = 1;
+	retval = TRUE;
 	return retval;
 }
 
@@ -113,3 +124,5 @@ storage_1_freeresult (SVCXPRT *transp, xdrproc_t xdr_result, caddr_t result)
 
 	return 1;
 }
+
+

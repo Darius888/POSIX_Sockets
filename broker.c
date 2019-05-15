@@ -13,7 +13,6 @@
 #include "lines.h"
 #include "storage.h"
 
-
 #define MAX_LINE 256
 #define MAX_LINE_TEXTO 1024
 #define NUM_THREADS 2
@@ -22,15 +21,15 @@
 #define OP_PUBLISH 3
 #define OP_QUIT 4
 
-<<<<<<< HEAD
-void* clientFunction(void *arguments);
-void initializeStorage(char* host);
-int putTopicAndText(char* host,char* topic, char* text);
+struct TopicList{
+    char topicName[128];
+    char port[128];
+    struct TopicList* nextNode;
+};
+typedef struct TopicList* Topics;
+Topics head = NULL;
+int sizeList = 0;
 
-
-
-=======
->>>>>>> d6e550b4338dfcf6a5443625658de5b90316e6e6
 pthread_mutex_t mutex;
 pthread_cond_t thread_ready;
 int notReady = 1;
@@ -39,8 +38,12 @@ struct sockaddr_in client_addr, server_addr;
 socklen_t size;
 char temaSub[128] = "";
 char textoSub[1024] = "";
+char portSub[256];
 
 void* clientFunction(void *arguments);
+void initializeStorage(char* host);
+int putTopicAndText(char* host,char* topic, char* text);
+int getTopicAndText(char* host, char* topic, char* text);
 
 void print_usage() {
 	    printf("Usage: broker -p puerto \n");
@@ -107,18 +110,109 @@ int main(int argc, char *argv[]) {
 		}
 		notReady = 1;
 		pthread_mutex_unlock(&mutex);
+		free(arguments);
 	}
 	close(sd);
+	Topics tmp = head;
+    while(tmp != NULL){
+        free(tmp);
+        tmp = tmp->nextNode;
+    }
 	exit(0);
+}
+
+Topics getTopics(char* topic){
+    Topics res = head;
+    if(res == NULL){
+        return res;
+    }else if(strcmp(res->topicName , topic)==0){
+        return res;
+    } else{
+        while(res != NULL){
+            if(strcmp(res->topicName ,topic)==0){
+                return res;
+            }else if(res->nextNode == NULL){
+                return NULL;
+            }
+            else{
+                res = res->nextNode;
+            }
+        }
+    }
+    return res;
+}
+
+int addTopic(char* topicName, char* port){
+    if(getTopics(topicName) != NULL){
+        return -1;
+    }
+	Topics pTopics = (Topics) malloc(sizeof(struct TopicList));
+    strcpy(pTopics->topicName, topicName);
+    strcpy(pTopics->port, port);
+    pTopics->nextNode = NULL;
+
+    if (sizeList > 0)
+	{
+        pTopics->nextNode = head;
+    }
+    head = pTopics;
+
+    sizeList++;
+    return 0;
+}
+
+int deleteTopic(char* topic){
+    Topics tmp = getTopics(topic);
+    if(tmp == NULL){
+        return -1;
+    }
+    if(tmp == head){
+        head = head->nextNode;
+    } else{
+        Topics node = head;
+        while(node->nextNode != tmp){
+           node = node->nextNode;
+        }
+        node->nextNode = tmp->nextNode;
+    }
+    free(tmp);
+    sizeList --;
+    return 0;
+}
+
+int sendToSubscriber(char *topic, char *text) {
+
+	struct sockaddr_in server_addr;
+	struct hostent *hp;
+	int sd;
+	if(getTopics(topic) != NULL){
+		bzero((char *)&server_addr, sizeof(server_addr));
+		hp = gethostbyname("localhost");
+		memcpy(&(server_addr.sin_addr), hp->h_addr_list[0], hp->h_length);
+		server_addr.sin_family	= AF_INET;
+		server_addr.sin_port	= htons(atoi(getTopics(topic)->port));
+		sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if(connect(sd, (struct sockaddr *) &server_addr, sizeof(server_addr))==-1)
+		{
+			printf("Error in the connection to the server host : %s\n", portSub);
+		} else
+		{
+			printf("Connection works with listener\n");
+		}	
+		send(sd, text, sizeof(text), 0);
+		close(sd);
+	}
+	return 0;
 }
 
 void* clientFunction(void *arguments){
 	int topic, text;
-	ssize_t response, response2;
+	ssize_t response;
 	ssize_t operation;
 	char op_buff[256];
 	char tema[128] = "";
 	char texto[1024] = "";
+	char retText[1024] = "";
 
 	pthread_mutex_lock(&mutex);
 	sc = *((int*)arguments);
@@ -130,43 +224,30 @@ void* clientFunction(void *arguments){
 
 	while(1){
 		operation = readLine(sc, op_buff, MAX_LINE);
-		// printf("buffer = %s\n", op_buff);
 
 		if(strcmp(op_buff, "SUBSCRIBE") == 0){
 			printf("OPERATION CODE RECEIVED : SUBSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
 			
 			operation = readLine(sc, op_buff, MAX_LINE);
-			char *topicSub;
-			topicSub = op_buff;
-			operation = readLine(sc, op_buff, MAX_LINE);
-			char *portSub;
-			portSub = op_buff;
+			char topicSub[128];
+			strcpy(topicSub, op_buff);
+
 			char byte[1];
 			byte[0] = OP_SUB;
-<<<<<<< HEAD
-			response = write(sc, byte, MAX_LINE);
-
-
-			initializeStorage("localhost");
-
-
-
-
-			
-		} else if(op_buff[0] == OP_PUBLISH){
-=======
 			send(sc, byte, sizeof(byte), 0);
-			strcat(temaSub, ":");
-			strcat(temaSub, textoSub);	
-			send(sc, temaSub, sizeof(temaSub), 0);		
+
+			operation = readLine(sc, op_buff, MAX_LINE);
+			strcpy(portSub, op_buff);
+			addTopic(topicSub, portSub);
+
+			initializeStorage("localhost");			
 		} else if(strcmp(op_buff, "PUBLISH")==0){
->>>>>>> d6e550b4338dfcf6a5443625658de5b90316e6e6
 			printf("OPERATION CODE RECEIVED : PUBLISH\n");
 			printf("OPERATION CODE APPLIED\n");
 			char byte[1];
 			byte[0] = OP_PUBLISH;
-			response = write(sc, byte, MAX_LINE);
+			send(sc, "PUBLISH\0", sizeof(char *), 0);
 
 			topic = readLine(sc, tema, MAX_LINE);
 			text = readLine(sc, texto, MAX_LINE);
@@ -177,32 +258,31 @@ void* clientFunction(void *arguments){
 			printf("%s\n", texto );
 			strcpy(temaSub, tema);
 			strcpy(textoSub, texto);
-
-<<<<<<< HEAD
-			send(sc, (char *) tema, topic+1, 0);
-			send(sc,(char *) &topic, sizeof(int) ,0);
-			send(sc, (char *) texto, text+1, 0);
-			send(sc,(char *) &text, sizeof(int) ,0);
+			sendToSubscriber(temaSub, textoSub);
+			
 
 			initializeStorage("localhost");
-			putTopicAndText("localhost",tema, topic);
+			putTopicAndText("localhost",temaSub, textoSub);
+			getTopicAndText("localhost","88", retText );
 
-
-		} else if(op_buff[0] == OP_QUIT){
-=======
-		} else if(strcmp(op_buff, "QUIT")==0){
->>>>>>> d6e550b4338dfcf6a5443625658de5b90316e6e6
-			printf("OPERATION CODE RECEIVED : QUIT\n");
-			printf("OPERATION CODE APPLIED\n");
-			break;
 		} else if(strcmp(op_buff, "UNSUBSCRIBE")==0){
 			printf("OPERATION CODE RECEIVED : UNSUSCRIBE\n");
 			printf("OPERATION CODE APPLIED\n");
-			// operation = readLine(sc, op_buff, MAX_LINE);
-			// char *topicUnsub;
-			// topicUnsub = op_buff;
+			operation = readLine(sc, op_buff, MAX_LINE);
+			char topicUnsub[128];
+			strcpy(topicUnsub, op_buff);
+			int res = deleteTopic(topicUnsub);
+			char byte[1];
+			if(res == -1){
+				byte[0] = 1;
+				response = write(sc, byte, MAX_LINE);
+			}else if(res == 0){
+				byte[0] = 0;
+				response = write(sc, byte, MAX_LINE);
+			}
 		} else{
 			printf("Error in code\n");
+			break;
 		}
 		memset(op_buff, 0, sizeof(op_buff));
 	}
@@ -215,6 +295,7 @@ void initializeStorage(char* host)
 	CLIENT *clnt;
 	enum clnt_stat retval_1;
 	int result_1;
+	printf("INITIALIZING\n" );
 
 	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
 	if (clnt == NULL) {
@@ -227,9 +308,10 @@ void initializeStorage(char* host)
 		clnt_perror (clnt, "call failed");
 	}
 	
-	printf("%d\n", result_1);
+	printf("INITIALIZED : %d\n", result_1);
 
 	clnt_destroy (clnt);
+
 }
 
 int putTopicAndText(char* host, char* topic, char* text)
@@ -248,12 +330,43 @@ int putTopicAndText(char* host, char* topic, char* text)
 		exit (1);
 	}
 
-	retval_2 = put_1(put_1_topic, put_1_text, &result_2, clnt);
+	retval_2 = put_1(topic, text, &result_2, clnt);
+
 	if (retval_2 != RPC_SUCCESS) {
 		clnt_perror (clnt, "call failed");
 	}
 
+
+
 	printf("%d\n", result_2);
+
+	clnt_destroy (clnt);
+	return 1;
+}
+
+int getTopicAndText(char* host, char* topic, char* text)
+{
+	CLIENT *clnt;
+	enum clnt_stat retval_3;
+	int result_3;
+	char *get_1_topic;
+	char *get_1_text;
+
+
+	clnt = clnt_create (host, STORAGE, STORAGEVER, "udp");
+	if (clnt == NULL) {
+		clnt_pcreateerror (host);
+		exit (1);
+	}
+
+	retval_3 = get_1(topic, text, &result_3, clnt);
+	if (retval_3 != RPC_SUCCESS) {
+		clnt_perror (clnt, "call failed");
+	}
+
+	printf("GET TEXT BY TOPIC IS SUCCESS %d\n", result_3);
+
+	printf("RECEIVED TEXT: %d\n", *text );
 
 	clnt_destroy (clnt);
 }
