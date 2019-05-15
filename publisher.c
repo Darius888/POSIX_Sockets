@@ -15,7 +15,7 @@
 #define MAX_LINE_TEXTO 1024
 
 void print_usage() {
-	printf("Usage: editor -h host -p puerto -t \"tema\" -m \"texto\"\n");
+	printf("Usage: ./publisher -h host -p puerto -t \"tema\" -m \"texto\"\n");
 }
 
 int main(int argc, char *argv[]){

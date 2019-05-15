@@ -198,7 +198,7 @@ class subscriber{
 	 */
 	static void usage() 
 	{
-		System.out.println("Usage: java -cp . suscriptor -s <server> -p <port>");
+		System.out.println("Usage: java -cp . subscriber -s <server> -p <port>");
 	}
 	
 	/**
@@ -206,7 +206,7 @@ class subscriber{
 	 */ 
 	static boolean parseArguments(String [] argv) 
 	{
-		Getopt g = new Getopt("suscriptor", argv, "ds:p:");
+		Getopt g = new Getopt("subscriber", argv, "ds:p:");
 
 		int c;
 		String arg;
