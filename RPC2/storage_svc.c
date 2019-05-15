@@ -44,7 +44,7 @@ storage_1(struct svc_req *rqstp, register SVCXPRT *transp)
 	union {
 		int init_1_res;
 		int put_1_res;
-		char *get_1_res;
+		int get_1_res;
 	} result;
 	bool_t retval;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -69,7 +69,7 @@ storage_1(struct svc_req *rqstp, register SVCXPRT *transp)
 
 	case GET:
 		_xdr_argument = (xdrproc_t) xdr_get_1_argument;
-		_xdr_result = (xdrproc_t) xdr_wrapstring;
+		_xdr_result = (xdrproc_t) xdr_int;
 		local = (bool_t (*) (char *, void *,  struct svc_req *))_get_1;
 		break;
 

@@ -38,8 +38,8 @@ extern  bool_t init_1_svc(int *, struct svc_req *);
 extern  enum clnt_stat put_1(char *, char *, int *, CLIENT *);
 extern  bool_t put_1_svc(char *, char *, int *, struct svc_req *);
 #define GET 3
-extern  enum clnt_stat get_1(char *, char *, char **, CLIENT *);
-extern  bool_t get_1_svc(char *, char *, char **, struct svc_req *);
+extern  enum clnt_stat get_1(char *, char *, int *, CLIENT *);
+extern  bool_t get_1_svc(char *, char *, int *, struct svc_req *);
 extern int storage_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
