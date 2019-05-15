@@ -1,0 +1,21 @@
+- Go into the directory the projected was unzipped.
+- Go into the formatter folder. Open terminal there and type in command : 
+	wsimport -keep http://www.dataaccess.com/webservicesserver/numberconversion.wso?WSDL
+- Then type in the same terminal : make 
+  and then type :
+	java formatter.FormatterPublisher
+Don’t close this terminal until the end
+- Go into the directory the projected was unzipped. Open a new terminal there and type in command :
+	curl http://localhost:8888/rs?wsdl > FormatterService.wsdl
+- Then type in the same terminal :
+	wsimport -p service -keep FormatterService.wsdl
+The web service can be used.
+- Go into the directory the projected was unzipped. Open terminal there and type in command :
+	make -f Makefile.storage
+
+Then open a terminal for each process (publisher, subscriber, broker)
+To start, open terminal and type : ./storage_server
+Open a new terminal : ./broker -p <port>
+Open a new terminal : ./publisher -h <server> -p <port> -t <topic> -m <text>
+Open a new terminal : java -cp . subscriber -s <server> -p <port>
+
